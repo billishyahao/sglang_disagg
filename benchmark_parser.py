@@ -18,43 +18,45 @@ def parse_benchmark_log(logfile):
 
     results = []
 
-    # Split content by benchmark runs (each starts with [RUNNING])
-    runs = re.split(r'\[RUNNING\]', content)[1:]  # Skip first empty split
+    # Split content by benchmark runs (each starts with "Benchmarking on")
+    runs = re.split(r'export_file:', content)[1:]  # Skip first empty split
 
     for run in runs:
-        # Extract parameters from the [RUNNING] line
-        match = re.search(r'prompts\s+isl\s+(\d+)\s+osl\s+(\d+)\s+con\s+(\d+)\s+model\s+([^\s]+)\s+xP=(\d+)\s+yD=(\d+)', run)
-        if not match:
-            continue
+        # Extract parameters from the export_file path
+        # Example: /sglang_disagg/logs/slurm_job-430/sglang_isl_1024_osl_1024/concurrency_64_req_rate_inf_gpus_24_ctx_8_gen_16
+        # match = re.search(r'sglang_isl_(\d+)_osl_(\d+)/concurrency_(\d+)_req_rate_([^_]+)_gpus_(\d+)_ctx_(\d+)_gen_(\d+)', run)
+        # if not match:
+        #     continue
 
-        question_len = int(match.group(1))
-        output_len = int(match.group(2))
-        concurrency = int(match.group(3))
-        model = match.group(4)
-        xp = int(match.group(5))
-        yd = int(match.group(6))
+        # question_len = int(match.group(1))
+        # output_len = int(match.group(2))
+        # concurrency = int(match.group(3))
+        # # req_rate = match.group(4) # Not used in output dict yet
+        # # total_gpus = int(match.group(5)) # Not used in output dict yet
+        # xp = int(match.group(6))
+        # yd = int(match.group(7))
+        # model_path = "Unknown" # Model name is not in the line, defaulting
+
 
         # Extract dataset statistics
-        prompts_per_group = None
-        total_prompts = None
-        total_input_tokens = None
-        total_output_tokens = None
+        question_len = None
+        output_len = None
+        concurrency = None
+        request_rate = None
+        model_path = None
 
-        dataset_match = re.search(r'Prompts per group:\s+(\d+)', run)
-        if dataset_match:
-            prompts_per_group = int(dataset_match.group(1))
-
-        total_prompts_match = re.search(r'Total prompts:\s+(\d+)', run)
-        if total_prompts_match:
-            total_prompts = int(total_prompts_match.group(1))
-
-        input_tokens_match = re.search(r'Total input tokens:\s+([\d,]+)', run)
-        if input_tokens_match:
-            total_input_tokens = int(input_tokens_match.group(1).replace(',', ''))
-
-        output_tokens_match = re.search(r'Total output tokens:\s+([\d,]+)', run)
-        if output_tokens_match:
-            total_output_tokens = int(output_tokens_match.group(1).replace(',', ''))
+        # Extract parameters from the export_file path which is at the beginning of the chunk
+        # The chunk starts with: /sglang_disagg/logs/...
+        match = re.search(r'sglang_isl_(\d+)_osl_(\d+)/concurrency_(\d+)', run)
+        if match:
+             question_len = int(match.group(1))
+             output_len = int(match.group(2))
+             concurrency = int(match.group(3))
+        
+        # Attempt to find model in the command line execution
+        model_match = re.search(r'benchmark_serving\.py.+--model\s+([^\s]+)', run, re.DOTALL)
+        if model_match:
+             model_path = model_match.group(1)
 
         # Find benchmark result block
         if '============ Serving Benchmark Result ============' in run:
@@ -66,23 +68,27 @@ def parse_benchmark_log(logfile):
             successful_requests = extract(r'Successful requests:\s+([\d,]+)')
             duration = extract(r'Benchmark duration \(s\):\s+([\d\.]+)')
             req_throughput = extract(r'Request throughput \(req/s\):\s+([\d\.]+)')
+            
+            # Input token throughput might be missing, calculate if needed
+            total_input_tokens = extract(r'Total input tokens:\s+([\d,]+)')
             input_tok_throughput = extract(r'Input token throughput \(tok/s\):\s+([\d,\.]+)')
+            if input_tok_throughput is None and total_input_tokens and duration:
+                input_tok_throughput = total_input_tokens / duration
+
             output_tok_throughput = extract(r'Output token throughput \(tok/s\):\s+([\d,\.]+)')
-            total_tok_throughput = extract(r'Total token throughput \(tok/s\):\s+([\d,\.]+)')
-            mean_e2e = extract(r'Mean E2E Latency \(ms\):\s+([\d,\.]+)')
+            
+            # Case insensitive match for Total Token throughput
+            total_tok_throughput = extract(r'Total [Tt]oken throughput \(tok/s\):\s+([\d,\.]+)')
+            
+            mean_e2e = extract(r'Mean E2EL? \(ms\):\s+([\d,\.]+)') # Handle E2E or E2EL
             mean_ttft = extract(r'Mean TTFT \(ms\):\s+([\d,\.]+)')
             mean_itl = extract(r'Mean ITL \(ms\):\s+([\d,\.]+)')
 
             results.append({
-                'Model': model,
-                'xP_yD': f"{xp}p{yd}d",
+                'Model': model_path,
                 'ISL': question_len,
                 'OSL': output_len,
                 'Concurrency': concurrency,
-                'Prompts_Group': prompts_per_group,
-                'Total_Prompts': total_prompts,
-                'Total_Input_Tokens': total_input_tokens,
-                'Total_Output_Tokens': total_output_tokens,
                 'Request_Throughput_req_s': req_throughput,
                 'Input_Token_Throughput_tok_s': input_tok_throughput,
                 'Output_Token_Throughput_tok_s': output_tok_throughput,
@@ -185,7 +191,7 @@ The tool extracts metrics including:
     # Select columns based on compact option
     if args.compact:
         columns = [
-            'Model', 'xP/yD', 'ISL', 'OSL', 'Concurrency',
+            'Model', 'ISL', 'OSL', 'Concurrency',
             'Request Throughput (req/s)', 'Total Token Throughput (tok/s)',
             'Mean E2E Latency (ms)', 'Mean TTFT (ms)', 'Mean ITL (ms)'
         ]

@@ -133,19 +133,25 @@ And run it through `bash ./run_interactive_disagg.sh`
 
 
 ## Post execution Log files:
-After execution, a directory named `slurm_job_<JOB_ID>` is created inside `/tmp` containing the logs. 
+After execution, a directory named `slurm_job-$SLURM_JOB_ID` is created inside `/tmp` containing the logs. 
 
 Inside that folder:
-```
-pd_sglang_bench_serving.sh_NODE<>.log - Overall log per ser Node 
-decode_NODE<>.log - Decode services
-prefill_NODE<>.log - prefill services
+``` bash
+pd_sglang_bench_serving.sh_NODE${NODE_RANK}.log - Overall log per ser Node 
+decode_NODE${NODE_RANK}.log - Decode services
+prefill_NODE${NODE_RANK}.log - prefill services
 ```
 
 ## Benchmark parser ( for CONCURRENCY logs) to tabulate different data
-
-```bash
+```
+# Display results on screen
 python3 benchmark_parser.py /tmp/slurm_job-$SLURM_JOB_ID/pd_sglang_bench_serving.sh_NODE$NODE_RANK.log
+
+# Save to specified CSV file
+python3 benchmark_parser.py /tmp/slurm_job-$SLURM_JOB_ID/pd_sglang_bench_serving.sh_NODE$NODE_RANK.log --csv results.csv
+
+# Save to auto-named CSV file
+python3 benchmark_parser.py /tmp/slurm_job-$SLURM_JOB_ID/pd_sglang_bench_serving.sh_NODE$NODE_RANK.log --csv
 ```
 
 ## History and Acknowledgement

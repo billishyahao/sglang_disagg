@@ -11,7 +11,7 @@ This repository contains scripts and documentation to launch multi nodes distrib
 ## 📝 Prerequisites
 
 - A Slurm cluster with required Nodes -> xP + yD  (minimum size 2: xP=1 and yD=1)
-- A prebuilt rocm docker image supporting MI355(GFX950) contains all dependency library including SGLang, AITER, MoRI, AINIC driver e.g. rocm/sgl-dev:sglang-0.5.6.post1-rocm700-mi35x-mori-1218
+- A prebuilt rocm docker image supporting MI355(GFX950) contains all dependency library including SGLang, AITER, MoRI, AINIC driver e.g. `rocm/sgl-dev:sglang-0.5.6.post1-rocm700-mi35x-mori-1218`
 - Access to a shared filesystem for log collection( cluster specific)
 
 
@@ -19,86 +19,133 @@ This repository contains scripts and documentation to launch multi nodes distrib
 
 Few files of significance:
 
-- sglang_disagg/run_submit_disagg.sh - Run sbatch job automatically, this is entrypoint for CI integation
-- sglang_disagg/run_interactive_disagg.sh - Run interactive slurm job so before running, user need to pre-salloc
-- sglang_disagg/run_xPyD_models.slurm - Core slurm script to launch docker containers on all nodes using either sbatch or salloc
-- sglang_disagg/sglang_disagg_server.sh - Script that runs inside each docker to start required router, prefill and decode services
-- sglang_disagg/benchmark.sh - Benchmark script to run vllm/sglang benchmarking tool for performance measurement
-- sglang_disagg/benchmark_parser.py - Log parser script to be run on CONCURRENY benchmark log file to generate tabulated data
+| File | Description |
+|------|-------------|
+| `run_submit_disagg.sh` | Run sbatch job automatically, this is entrypoint for CI integation |
+| `run_interactive_disagg.sh` | Run interactive slurm job so before running, user need to pre-salloc |
+| `run_xPyD_models.slurm` | Core slurm script to launch docker containers on all nodes using either sbatch or salloc |
+| `sglang_disagg_server.sh` | Script that runs inside each docker to start required router, prefill and decode services |
+| `bench.sh` | Benchmark script to run vllm/sglang benchmarking tool for performance measurement |
+| `benchmark_parser.py` | Log parser script to be run on CONCURRENY benchmark log file to generate tabulated data |
+
+## Specify your IB Devices
+Run the following command to list all available InfiniBand (IB) devices:
+
+```bash
+ibv_devinfo -l
+```
+
+Example output:
+
+```text
+8 HCAs found:
+        ionic_0
+        ionic_1
+        ionic_2
+        ionic_3
+        ionic_4
+        ionic_5
+        ionic_6
+        ionic_7
+```
+
+Update `set_env_vars.sh` with the comma-separated list of device names found on your system:
+
+```bash
+export IBDEVICES=ionic_0,ionic_1,ionic_2,ionic_3,ionic_4,ionic_5,ionic_6,ionic_7
+``` 
 
 ## Sbatch run command (non-interactive)
 
-Make sure specifying the slurm job need
+Before submitting the job, ensure you update the following environment variables to match your specific cluster configuration and requirements in `run_submit_disagg.sh`:
 
 ```bash
 
-export SLURM_ACCOUNT="amd"
-export SLURM_PARTITION="compute"
-export TIME_LIMIT="24:00:00"
-export MODEL_PATH="/nfsdata"
-export MODEL_NAME="DeepSeek-R1"
-export CONTAINER_IMAGE="rocm/sgl-dev:sglang-0.5.6.post1-rocm700-mi35x-mori-1218"
-export PREFILL_NODES=1
-export PREFILL_WORKERS=1
-export DECODE_NODES=2
-export DECODE_WORKERS=2
-export ISL=1024
-export OSL=1024
-export CONCURRENCIES="2048"
-export REQUEST_RATE="inf"
-export PREFILL_ENABLE_EP=true
-export PREFILL_ENABLE_DP=true
-export DECODE_ENABLE_EP=true
-export DECODE_ENABLE_DP=true
+# SLURM Job Configuration
+export SLURM_ACCOUNT="amd"       # The account name for SLURM job accounting and resource allocation
+export SLURM_PARTITION="compute" # The specific cluster partition (queue) to submit the job to
+export TIME_LIMIT="24:00:00"     # Maximum wall time for the job (Hours:Minutes:Seconds)
+
+# Model Configuration
+export MODEL_PATH="/nfsdata"     # Base directory where the model weights are stored
+export MODEL_NAME="DeepSeek-R1"  # Specific model directory name (joined with MODEL_PATH)
+export CONTAINER_IMAGE="rocm/sgl-dev:sglang-0.5.6.post1-rocm700-mi35x-mori-1218" # Docker image to use for the environment
+
+# Cluster Topology (Disaggregation Setup)
+export PREFILL_NODES=1           # Number of prefill nodes
+export PREFILL_WORKERS=1         # Number of prefill workers
+export DECODE_NODES=2            # Number of decode nodes
+export DECODE_WORKERS=2          # Number of decode workers
+
+# Benchmark/Workload Parameters
+export ISL=1024                  # Input Sequence Length (number of tokens in the prompt)
+export OSL=1024                  # Output Sequence Length (number of tokens to generate)
+export CONCURRENCIES="2048"      # Total number of concurrent requests to simulate in the benchmark. The value can be "32,64,128"
+export REQUEST_RATE="inf"        # Request per second rate. "inf" means send all requests immediately
+
+# Parallelism Strategies
+export PREFILL_ENABLE_EP=true    # Enable Expert Parallelism (EP) for the prefill phase 
+export PREFILL_ENABLE_DP=true    # Enable Data Parallelism (DP) for the prefill phase
+export DECODE_ENABLE_EP=true     # Enable Expert Parallelism (EP) for the decode phase
+export DECODE_ENABLE_DP=true     # Enable Data Parallelism (DP) for the decode phase
 ```
 
-Then submit the batch job into slurm cluster through bash ./run_submit_disagg.sh
+Then submit the batch job into slurm cluster through `bash ./run_submit_disagg.sh`
 
 ## Srun run command (interactive)
 
-Make sure applying for a interactive allocation through salloc 
+Make sure applying for an interactive allocation through salloc 
 
 ```bash
 salloc -N 3 --ntasks-per-node=1 --nodelist=<Nodes> --gres=gpu:8 -p <partition> -t 12:00:00
 ```
 
-Then modifying the following env:
+Then modifying the following env accordingly in `run_interactive_disagg.sh`:
 ```bash
-export xP=1
-export yD=2
-export MODEL_DIR="/nfsdata"
-export MODEL_NAME=DeepSeek-R1
-export PREFILL_TP_SIZE=8
-export PREFILL_ENABLE_EP=true
-export PREFILL_ENABLE_DP=true
-export DECODE_TP_SIZE=8
-export DECODE_ENABLE_EP=true
-export DECODE_ENABLE_DP=true
-export BENCH_INPUT_LEN=1024
-export BENCH_OUTPUT_LEN=1024
-export BENCH_RANDOM_RANGE_RATIO=1
-export BENCH_NUM_PROMPTS_MULTIPLIER=10
-export BENCH_MAX_CONCURRENCY=2048
+# Topology Configuration
+export xP=1                          # Number of nodes assigned for prefill
+export yD=2                          # Number of nodes assigned for decode
+
+# Model Location
+export MODEL_DIR="/nfsdata"          # Base directory path where model weights are stored
+export MODEL_NAME=DeepSeek-R1        # Specific subdirectory name for the model (e.g., /nfsdata/DeepSeek-R1)
+
+# Prefill Node Configuration
+export PREFILL_TP_SIZE=8             # Tensor Parallelism number for Prefill (usually equals GPUs per node)
+export PREFILL_ENABLE_EP=true        # Enable Expert Parallelism (EP) for Prefill
+export PREFILL_ENABLE_DP=true        # Enable Data Parallelism (DP) for Prefill
+
+# Decode Node Configuration
+export DECODE_TP_SIZE=8              # Tensor Parallelism number for Decode (usually equals GPUs per node)
+export DECODE_ENABLE_EP=true         # Enable Expert Parallelism (EP) for Decode
+export DECODE_ENABLE_DP=true         # Enable Data Parallelism (DP) for Decode
+
+# Benchmark Settings
+export BENCH_INPUT_LEN=1024          # Input Sequence Length (number of tokens in the prompt)
+export BENCH_OUTPUT_LEN=1024         # Output Sequence Length (number of tokens to generate)
+export BENCH_RANDOM_RANGE_RATIO=1    # Variance ratio for sequence lengths
+export BENCH_NUM_PROMPTS_MULTIPLIER=10 # Multiplier to determine total prompts (e.g., 10 * concurrency or batch size)
+export BENCH_MAX_CONCURRENCY=2048    # Maximum number of concurrent requests to simulate during the test
 ```
 
-And run it through bash ./run_interactive_disagg.sh
+And run it through `bash ./run_interactive_disagg.sh`
 
 
 
 ## Post execution Log files:
-A directory inside the LOG_PATH variable in the slurm script is created by the name of slurm_job_ID. 
+After execution, a directory named `slurm_job_<JOB_ID>` is created inside `/tmp` containing the logs. 
 
 Inside that folder:
-
+```
 pd_sglang_bench_serving.sh_NODE<>.log - Overall log per ser Node 
 decode_NODE<>.log - Decode services
 prefill_NODE<>.log - prefill services
-
+```
 
 ## Benchmark parser ( for CONCURRENCY logs) to tabulate different data
 
 ```bash
-python3 benchmark_parser.py <log_path/benchmark_XXX_CONCURRENCY.log
+python3 benchmark_parser.py /tmp/slurm_job-$SLURM_JOB_ID/pd_sglang_bench_serving.sh_NODE$NODE_RANK.log
 ```
 
 ## History and Acknowledgement

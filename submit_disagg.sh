@@ -77,9 +77,11 @@ export xP=$PREFILL_WORKERS
 export yD=$DECODE_WORKERS
 export MODEL_NAME=$MODEL_NAME
 export PREFILL_TP_SIZE=$(( $PREFILL_NODES * 8 / $PREFILL_WORKERS ))
+export PREFILL_NODES_PER_WORKER=$(( $PREFILL_NODES / $PREFILL_WORKERS ))
 export PREFILL_ENABLE_EP=${PREFILL_ENABLE_EP}
 export PREFILL_ENABLE_DP=${PREFILL_ENABLE_DP}
 export DECODE_TP_SIZE=$(( $DECODE_NODES * 8 / $DECODE_WORKERS ))
+export DECODE_NODES_PER_WORKER=$(( $DECODE_NODES / $DECODE_WORKERS ))
 export DECODE_ENABLE_EP=${DECODE_ENABLE_EP}
 export DECODE_ENABLE_DP=${DECODE_ENABLE_DP}
 export BENCH_INPUT_LEN=${ISL}
@@ -98,7 +100,7 @@ sbatch_cmd=(
     --partition "$SLURM_PARTITION" 
     --account "$SLURM_ACCOUNT"
     --nodelist GPU7418,GPU3E76,GPU74C0
-    --job-name 1p2d_bench-serving
+    --job-name ${xP}p${yD}d_bench-serving
     run_xPyD_models.slurm
 )
 

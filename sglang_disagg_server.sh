@@ -14,13 +14,15 @@ MODEL_NAME="${MODEL_NAME:-}"
 xP="${xP:-1}"
 yD="${yD:-1}"
 IPADDRS="${IPADDRS:-localhost}"
-PROFILER_ARGS="${PROFILER_ARGS:-}"
-
+PREFILL_LEADERS_PORT=20000
+DECODE_LEADERS_PORT=20000
 # Parallelism Configuration
 PREFILL_TP_SIZE="${PREFILL_TP_SIZE:-8}"
+PREFILL_NODES_PER_WORKER="${PREFILL_NODES_PER_WORKER:-1}"
 PREFILL_ENABLE_EP="${PREFILL_ENABLE_EP:-true}"
 PREFILL_ENABLE_DP="${PREFILL_ENABLE_DP:-true}"
 DECODE_TP_SIZE="${DECODE_TP_SIZE:-8}"
+DECODE_NODES_PER_WORKER="${DECODE_NODES_PER_WORKER:-1}"
 DECODE_ENABLE_EP="${DECODE_ENABLE_EP:-true}"
 DECODE_ENABLE_DP="${DECODE_ENABLE_DP:-true}"
 
@@ -82,6 +84,22 @@ fi
 declare -A MODEL_DECODE_CONFIGS=(
     ["DeepSeek-R1"]="--mem-fraction-static 0.6 --max-running-requests ${decode_max_running_requests} --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
 )
+
+# wide expert parallelism configuration
+prefill_leaders=()
+for i in $(seq 0 $((xP - 1))); do
+    leader_idx=$((i * PREFILL_NODES_PER_WORKER))
+    prefill_leaders[$i]="http://${IP_ARRAY[$leader_idx]}:${PREFILL_LEADERS_PORT}"
+done
+
+decode_leaders=()
+for i in $(seq 0 $((yD - 1))); do
+    decode_idx=$((i * DECODE_NODES_PER_WORKER))
+    decode_leaders[$i]="http://${IP_ARRAY[$decode_idx]}:${DECODE_LEADERS_PORT}"
+done
+
+echo "Prefill worker leaders: ${prefill_leaders[@]}"
+echo "Decode worker leaders: ${decode_leaders[@]}"
 
 # =============================================================================
 # Configuration Builder Functions
@@ -180,28 +198,6 @@ python $SGL_WS_PATH/socket_barrier.py \
     --node-ips ${IPADDRS} \
     --node-ports 5000
 
-# =============================================================================
-# Cluster Topology Configuration
-# =============================================================================
-
-IFS=',' read -ra IP_ARRAY <<< "$IPADDRS"
-
-# Build prefill arguments dynamically based on xP
-PREFILL_ARGS=""
-for ((i=0; i<xP; i++)); do
-    PREFILL_ARGS="$PREFILL_ARGS --prefill http://${IP_ARRAY[$i]}:8000"
-done
-
-# Build decode arguments dynamically based on yD
-DECODE_ARGS=""
-for ((i=0; i<yD; i++)); do
-    decode_idx=$((xP + i))
-    DECODE_ARGS="$DECODE_ARGS --decode http://${IP_ARRAY[$decode_idx]}:8000"
-done
-
-#TODO(billishyahao): support DEP>8 or TEP>8
-PREFILL_GPUS=$((xP * 8))
-DECODE_GPUS=$((yD * 8))
 
 # =============================================================================
 # Node Role Assignment and Server Launch

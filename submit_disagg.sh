@@ -75,6 +75,7 @@ export PROFILER_ARGS=$profiler_args
 
 export xP=$PREFILL_WORKERS
 export yD=$DECODE_WORKERS
+export NUM_NODES=$NUM_NODES
 export MODEL_NAME=$MODEL_NAME
 export PREFILL_TP_SIZE=$(( $PREFILL_NODES * 8 / $PREFILL_WORKERS ))
 export PREFILL_ENABLE_EP=${PREFILL_ENABLE_EP}
@@ -98,7 +99,7 @@ sbatch_cmd=(
     --partition "$SLURM_PARTITION" 
     --account "$SLURM_ACCOUNT"
     --nodelist GPU7418,GPU3E76,GPU74C0
-    --job-name 1p2d_bench-serving
+    --job-name ${xP}p${yD}d_bench-serving
     run_xPyD_models.slurm
 )
 

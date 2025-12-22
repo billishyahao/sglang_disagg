@@ -52,8 +52,8 @@ fi
 # Set current directory to be REPO directory with all relevant scripts
 export DI_REPO_DIR=$(pwd)
 
-xP="${xP:-1}" #-> Number of Prefill Servers
-yD="${yD:-1}" #-> Number of Decode Servers
+xP="${xP:-1}" #-> Number of Prefill Workers
+yD="${yD:-1}" #-> Number of Decode Workers
 
 # Parallelism Configuration with defaults
 PREFILL_TP_SIZE="${PREFILL_TP_SIZE:-8}"
@@ -158,10 +158,7 @@ fi
 echo "Final MODEL_PATH: $MODEL_PATH"
 echo ""
 
-
-# Calculate NUM_NODES based on xP and yD
-NUM_NODES=$((xP + yD))
-echo "Calculated NUM_NODES: $NUM_NODES (xP=$xP + yD=$yD)"
+NUM_NODES="${NUM_NODES}"
 
 # ------------------------
 # Extract first NUM_NODES from SLURM allocation and update SLURM variables

@@ -19,16 +19,16 @@
 
 set -x
 
-export SLURM_ACCOUNT="amd"
-export SLURM_PARTITION="compute"
+export SLURM_ACCOUNT="billhe12"
+export SLURM_PARTITION="Compute-Group01"
 export TIME_LIMIT="24:00:00"
-export MODEL_PATH="/nfsdata"
+export MODEL_PATH="/apps/data/models"
 export MODEL_NAME="DeepSeek-R1"
 export CONTAINER_IMAGE="rocm/sgl-dev:sglang-0.5.6.post1-rocm700-mi35x-mori-1218"
 export PREFILL_NODES=1
 export PREFILL_WORKERS=1
 export DECODE_NODES=2
-export DECODE_WORKERS=2
+export DECODE_WORKERS=1
 export ISL=1024
 export OSL=1024
 export CONCURRENCIES="2048"

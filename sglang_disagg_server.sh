@@ -118,14 +118,6 @@ done
 echo "Prefill worker headnode list: ${PREFILL_HEADNODE_URLS[@]}"
 echo "Decode  worker headnode list: ${DECODE_HEADNODE_URLS[@]}"
 
-
-
-
-
-
-
-
-
 # =============================================================================
 # Configuration Builder Functions
 # =============================================================================
@@ -245,18 +237,6 @@ if [ "$NODE_RANK" -eq 0 ]; then
     echo "Prefill servers ($((PREFILL_TP_SIZE/8)) nodes): ${PREFILL_ARGS}"
     echo "Decode servers  ($((DECODE_TP_SIZE/8))  nodes): ${DECODE_ARGS}"
     echo "================================================"
-
-    set -x 
-    python -m sglang_router.launch_router \
-    --pd-disaggregation \
-    --mini-lb \
-    --port 30000 \
-    ${PREFILL_ARGS} \
-    ${DECODE_ARGS} \
-    2>&1 | tee /run_logs/slurm_job-${SLURM_JOB_ID}/proxy_NODE${NODE_RANK}.log >/dev/null &
-    set +x
-    
-    proxy_pid=$!
     
     # start the head prefill server
     PREFILL_CMD="python3 -m sglang.launch_server \
@@ -272,8 +252,6 @@ if [ "$NODE_RANK" -eq 0 ]; then
         PREFILL_CMD="$PREFILL_CMD --dist-init-addr ${PREFILL_HEADNODE_URLS[0]} --nnodes ${$PREFILL_NODES_PER_WORKER} --node-rank 0"
     fi
 
-    # echo "PREFILL_CMD: $PREFILL_CMD"
-    
     set -x 
     eval "$PREFILL_CMD" \
         2>&1 | tee /run_logs/slurm_job-${SLURM_JOB_ID}/prefill_NODE${NODE_RANK}.log >/dev/null &
@@ -286,11 +264,23 @@ if [ "$NODE_RANK" -eq 0 ]; then
         --node-ips ${IPADDRS} \
         --node-ports 8000
 
-    echo "Proxy Server Ready for benchmarking on ${host_name}:${host_ip}"
+    set -x 
+    python -m sglang_router.launch_router \
+    --pd-disaggregation \
+    --mini-lb \
+    --port 30000 \
+    ${PREFILL_ARGS} \
+    ${DECODE_ARGS} \
+    2>&1 | tee /run_logs/slurm_job-${SLURM_JOB_ID}/proxy_NODE${NODE_RANK}.log >/dev/null &
+    set +x
+    
+    proxy_pid=$!
+
+    echo "Ready for benchmarking on ${host_name}:${host_ip}"
 
     echo "Benchmarking on ${host_name}:${host_ip}"
     cd /sglang_disagg
-    # todo: put bench.sh in sglang folder
+
     # n_prefill n_decode prefill_gpus decode_gpus model_dir model_name log_path isl osl concurrency_list req_rate random_range_ratio num_prompts_multiplier
     if [ ! -d /sglang_disagg/logs ]; then
         mkdir -p /sglang_disagg/logs
@@ -325,7 +315,6 @@ elif [ "$NODE_RANK" -gt 0 ] && [ "$NODE_RANK" -lt "$NODE_OFFSET" ]; then
         prefill_idx=$((NODE_RANK / PREFILL_NODES_PER_WORKER))
         PREFILL_CMD="$PREFILL_CMD --dist-init-addr ${PREFILL_HEADNODE_URLS[$prefill_idx]} --nnodes ${$PREFILL_NODES_PER_WORKER} --node-rank $rank"
     fi
-    # echo "PREFILL_CMD: $PREFILL_CMD"
 
     set -x 
     
@@ -369,8 +358,6 @@ else
         decode_idx=$((RANK / DECODE_NODES_PER_WORKER))
         DECODE_CMD="$DECODE_CMD --dist-init-addr ${DECODE_HEADNODE_URLS[$decode_idx]} --nnodes ${DECODE_NODES_PER_WORKER} --node-rank $rank"
     fi
-
-    # echo "DECODE_CMD: $DECODE_CMD"
 
     set -x 
     eval "$DECODE_CMD" \

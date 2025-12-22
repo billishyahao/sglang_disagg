@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -x
-
 n_prefill=$1
 n_decode=$2
 prefill_gpus=$3

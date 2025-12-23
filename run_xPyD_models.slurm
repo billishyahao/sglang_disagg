@@ -238,7 +238,7 @@ IPS=()
 
 GW_NIC=$(ip route | awk '/^default/ {print $5; exit}')
 for NODE in $SELECTED_NODES; do
-    IP=$(srun --nodes=1 --ntasks=1 --time=00:20:00 --nodelist="$NODE" bash -c 'ip route get 1.1.1.1')
+    IP=$(srun --nodes=1 --ntarun_xPyD_models.slurmsks=1 --time=00:20:00 --nodelist="$NODE" bash -c 'ip route get 1.1.1.1')
     IP=$(echo "$IP" | awk '/src/ {print $7}')
     IPS+=("$IP")
 done
@@ -282,7 +282,7 @@ export BENCH_RANDOM_RANGE_RATIO=$BENCH_RANDOM_RANGE_RATIO
 export BENCH_NUM_PROMPTS_MULTIPLIER=$BENCH_NUM_PROMPTS_MULTIPLIER
 export BENCH_MAX_CONCURRENCY=$BENCH_MAX_CONCURRENCY
 
-export DOCKER_CONT_NAME="container_sbatch_${USER_NAME}_${MODEL_NAME}_${SLURM_JOB_ID}"
+export DOCKER_CONT_NAME="container_sbatch_${MODEL_NAME}_${SLURM_JOB_ID}"
 export RUN_FILE_FULL="$SGL_WS_PATH/${RUN_FILE}"
 
 
@@ -310,7 +310,7 @@ srun --nodelist="$SELECTED_NODELIST_SRUN" bash -c '
     stat '"$DI_REPO_DIR"'/sglang_disagg_server.sh > /dev/null 2>&1
     cat '"$DI_REPO_DIR"'/sglang_disagg_server.sh > /dev/null 2>&1
     # Drop caches if we have permission (optional, requires root)
-    echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null 2>&1 || true
+    echo 3 | tee /proc/sys/vm/drop_caches > /dev/null 2>&1 || true
     echo "NFS cache refreshed on $(hostname)"
 '
 
@@ -325,9 +325,9 @@ set -euo pipefail
 echo \"Rank \$SLURM_PROCID on \$(hostname)\"
 
 # Pre-clean (idempotent)
-sudo docker ps -aq --filter \"name=^container_sbatch_\" | xargs -r sudo docker rm -f || true
+docker ps -aq --filter \"name=^container_sbatch_\" | xargs -r  docker rm -f || true
 
-exec sudo docker run --rm \
+exec docker run --rm \
     --init \
     --stop-timeout 10 \
     --device /dev/dri \
@@ -380,5 +380,5 @@ if [[ \$DOCKER_EXIT_CODE -ne 0 ]]; then
 fi
 "
 
-srun --nodelist="$SELECTED_NODELIST_SRUN" bash -c 'sudo docker rm -f $DOCKER_CONT_NAME 2>/dev/null || true'
+srun --nodelist="$SELECTED_NODELIST_SRUN" bash -c 'docker rm -f $DOCKER_CONT_NAME 2>/dev/null || true'
 

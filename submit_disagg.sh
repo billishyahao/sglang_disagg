@@ -99,8 +99,8 @@ sbatch_cmd=(
     --time "$TIME_LIMIT" 
     --partition "$SLURM_PARTITION" 
     --account "$SLURM_ACCOUNT"
-    --nodelist GPU7418,GPU3E76,GPU74C0
     --job-name ${xP}p${yD}d_bench-serving
+    --nodelist "mia1-p01-g10,mia1-p01-g11,mia1-p01-g12"
     run_xPyD_models.slurm
 )
 

@@ -19,12 +19,13 @@
 
 set -x
 
-export SLURM_ACCOUNT="amd"
+export SLURM_ACCOUNT="thshan@amd.com"
 export SLURM_PARTITION="compute"
 export TIME_LIMIT="24:00:00"
-export MODEL_PATH="/nfsdata"
+export MODEL_PATH="/it-share/data"
 export MODEL_NAME="DeepSeek-R1"
-export CONTAINER_IMAGE="rocm/sgl-dev:sglang-0.5.6.post1-rocm700-mi35x-mori-1224"
+#export CONTAINER_IMAGE="rocm/sgl-dev:sglang-0.5.6.post1-rocm700-mi35x-mori-1218"
+export CONTAINER_IMAGE="rocm/pytorch-private:sglang-0.5.6.post1-rocm700-mi35x-mori-1224-fix-topomap-dscp"
 export PREFILL_NODES=1
 export PREFILL_WORKERS=1
 export DECODE_NODES=2

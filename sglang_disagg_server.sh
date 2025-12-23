@@ -55,7 +55,7 @@ declare -A MODEL_BASE_CONFIGS=(
 
 # MTP configurations (only when DECODE_MTP_SIZE is set and greater than zero)
 declare -A MODEL_MTP_CONFIGS=(
-    ["DeepSeek-R1"]="--speculative-algorithm EAGLE --speculative-num-steps 1 --speculative-eagle-topk 1 --speculative-num-draft-tokens ${DECODE_MTP_SIZE}"
+    ["DeepSeek-R1"]="--speculative-algorithm NEXTN --speculative-num-steps 1 --speculative-eagle-topk 1 --speculative-num-draft-tokens ${DECODE_MTP_SIZE}"
 )
 
 
@@ -198,7 +198,7 @@ build_server_config() {
     if [[ -n "$base_config" ]]; then
         full_config="$full_config $base_config"
     fi
-    if [[ -n "$mtp_config" ]]; then
+    if [[ -n "$mtp_config" ]] && [[ "$mode" == "decode" ]]; then
         full_config="$full_config $mtp_config"
     fi
     if [[ -n "$dp_config" ]]; then

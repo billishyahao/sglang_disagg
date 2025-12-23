@@ -283,7 +283,7 @@ export BENCH_RANDOM_RANGE_RATIO=$BENCH_RANDOM_RANGE_RATIO
 export BENCH_NUM_PROMPTS_MULTIPLIER=$BENCH_NUM_PROMPTS_MULTIPLIER
 export BENCH_MAX_CONCURRENCY=$BENCH_MAX_CONCURRENCY
 
-export DOCKER_CONT_NAME="container_sbatch_${USER_NAME}_${MODEL_NAME}_${SLURM_JOB_ID}"
+export DOCKER_CONT_NAME="container_sbatch_${MODEL_NAME}_${SLURM_JOB_ID}"
 export RUN_FILE_FULL="$SGL_WS_PATH/${RUN_FILE}"
 
 # Use only the selected nodes for srun execution
@@ -293,7 +293,7 @@ SELECTED_NODELIST_SRUN=$(echo "$SELECTED_NODES" | paste -sd,)
 
 srun --nodelist="$SELECTED_NODELIST_SRUN" bash -c '
 echo "Rank $SLURM_PROCID on $(hostname)";
-sudo docker run --rm \
+docker run --rm \
     --device /dev/dri \
     --device /dev/kfd \
     --device /dev/infiniband \
@@ -337,5 +337,5 @@ sudo docker run --rm \
         $RUN_FILE_FULL 2>&1 | tee /run_logs/slurm_job-${SLURM_JOB_ID}/pd_sglang_bench_serving.sh_NODE${SLURM_PROCID}.log
     "
 '
-srun --nodelist="$SELECTED_NODELIST_SRUN" bash -c 'sudo docker rm -f $DOCKER_CONT_NAME'
+srun --nodelist="$SELECTED_NODELIST_SRUN" bash -c 'docker rm -f $DOCKER_CONT_NAME'
 

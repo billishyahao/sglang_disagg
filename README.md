@@ -11,7 +11,7 @@ This repository contains scripts and documentation to launch multi nodes distrib
 ## 📝 Prerequisites
 
 - A Slurm cluster with required Nodes -> xP + yD  (minimum size 2: xP=1 and yD=1)
-- A prebuilt rocm docker image supporting MI355(GFX950) contains all dependency library including SGLang, AITER, MoRI, AINIC driver e.g. `rocm/sgl-dev:sglang-0.5.6.post1-rocm700-mi35x-mori-1218`
+- A prebuilt rocm docker image supporting MI355(GFX950) contains all dependency library including SGLang, AITER, MoRI, AINIC driver e.g. `rocm/sgl-dev:sglang-0.5.6.post1-rocm700-mi35x-mori-1223`
 - Access to a shared filesystem for log collection( cluster specific)
 
 
@@ -69,7 +69,7 @@ export TIME_LIMIT="24:00:00"     # Maximum wall time for the job (Hours:Minutes:
 # Model Configuration
 export MODEL_PATH="/nfsdata"     # Base directory where the model weights are stored
 export MODEL_NAME="DeepSeek-R1"  # Specific model directory name (joined with MODEL_PATH)
-export CONTAINER_IMAGE="rocm/sgl-dev:sglang-0.5.6.post1-rocm700-mi35x-mori-1218" # Docker image to use for the environment
+export CONTAINER_IMAGE="rocm/sgl-dev:sglang-0.5.6.post1-rocm700-mi35x-mori-1223" # Docker image to use for the environment
 
 # Cluster Topology (Disaggregation Setup)
 export PREFILL_NODES=1           # Number of prefill nodes

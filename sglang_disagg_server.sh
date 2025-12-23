@@ -24,6 +24,7 @@ PREFILL_ENABLE_DP="${PREFILL_ENABLE_DP:-true}"
 DECODE_TP_SIZE="${DECODE_TP_SIZE:-8}"
 DECODE_ENABLE_EP="${DECODE_ENABLE_EP:-true}"
 DECODE_ENABLE_DP="${DECODE_ENABLE_DP:-true}"
+DECODE_MTP_SIZE="${DECODE_MTP_SIZE:-0}"
 
 # Benchmark Configuration
 BENCH_INPUT_LEN="${BENCH_INPUT_LEN:-1024}"
@@ -48,8 +49,15 @@ host_name=$(hostname)
 
 # Common configurations shared by both prefill and decode (base)
 declare -A MODEL_BASE_CONFIGS=(
-    ["DeepSeek-R1"]="--decode-log-interval 1 --watchdog-timeout 1000000 --chunked-prefill-size 262144 --ep-dispatch-algorithm fake --speculative-algorithm EAGLE --speculative-num-steps 1 --speculative-eagle-topk 1 --speculative-num-draft-tokens 2 --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter"
+    ["DeepSeek-R1"]="--decode-log-interval 1 --watchdog-timeout 1000000 --chunked-prefill-size 262144 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter"
 )
+
+
+# MTP configurations (only when DECODE_MTP_SIZE is set and greater than zero)
+declare -A MODEL_MTP_CONFIGS=(
+    ["DeepSeek-R1"]="--speculative-algorithm EAGLE --speculative-num-steps 1 --speculative-eagle-topk 1 --speculative-num-draft-tokens ${DECODE_MTP_SIZE}"
+)
+
 
 # DP-specific common configurations (only when DP is enabled)
 declare -A MODEL_DP_CONFIGS=(
@@ -72,8 +80,8 @@ declare -A MODEL_PREFILL_CONFIGS=(
 
 # Decode-specific configurations
 # Set parameters based on DP enable status
-if [[ "$PREFILL_ENABLE_DP" == "true" ]]; then
-    decode_cuda_graph_bs=($(seq 1 64))
+if [[ "$DECODE_ENABLE_DP" == "true" ]]; then
+    decode_cuda_graph_bs=($(seq 1 128))
     decode_max_running_requests=8192
 else
     decode_cuda_graph_bs=($(seq 1 256))
@@ -126,6 +134,7 @@ build_server_config() {
     local tp_size="$3"
     local enable_ep="$4"
     local enable_dp="$5"
+    local decode_mtp_size="$6"
     
     # Calculate EP and DP sizes based on enable flags
     local ep_size=1
@@ -152,6 +161,7 @@ build_server_config() {
     
     # Get model-specific configuration
     local base_config=""
+    local mtp_config=""
     local dp_config=""
     local specific_config=""
     
@@ -159,6 +169,11 @@ build_server_config() {
         # Get base configuration
         if [[ -n "${MODEL_BASE_CONFIGS[$model_name]}" ]]; then
             base_config="${MODEL_BASE_CONFIGS[$model_name]}"
+        fi
+
+        # Get MTP-related configuration (only if MTP is enabled)
+        if [ "$decode_mtp_size" -gt 0 ] && [[ -n "${MODEL_MTP_CONFIGS[$model_name]}" ]]; then
+            mtp_config="${MODEL_MTP_CONFIGS[$model_name]}"
         fi
         
         # Get DP-related configuration (only if DP is enabled)
@@ -178,10 +193,13 @@ build_server_config() {
         fi
     fi
     
-    # Combine all configurations: parallel args + base config + dp config + specific config
+    # Combine all configurations: parallel args + base config + mtp config + dp config + specific config
     local full_config="$parallel_args"
     if [[ -n "$base_config" ]]; then
         full_config="$full_config $base_config"
+    fi
+    if [[ -n "$mtp_config" ]]; then
+        full_config="$full_config $mtp_config"
     fi
     if [[ -n "$dp_config" ]]; then
         full_config="$full_config $dp_config"
@@ -194,8 +212,8 @@ build_server_config() {
 }
 
 # Build complete server configurations
-PREFILL_SERVER_CONFIG=$(build_server_config "prefill" "$MODEL_NAME" "$PREFILL_TP_SIZE" "$PREFILL_ENABLE_EP" "$PREFILL_ENABLE_DP")
-DECODE_SERVER_CONFIG=$(build_server_config "decode" "$MODEL_NAME" "$DECODE_TP_SIZE" "$DECODE_ENABLE_EP" "$DECODE_ENABLE_DP")
+PREFILL_SERVER_CONFIG=$(build_server_config "prefill" "$MODEL_NAME" "$PREFILL_TP_SIZE" "$PREFILL_ENABLE_EP" "$PREFILL_ENABLE_DP" "$DECODE_MTP_SIZE")
+DECODE_SERVER_CONFIG=$(build_server_config "decode" "$MODEL_NAME" "$DECODE_TP_SIZE" "$DECODE_ENABLE_EP" "$DECODE_ENABLE_DP" "$DECODE_MTP_SIZE")
 
 if [[ -n "$MODEL_NAME" ]]; then
     echo "Using model-specific configuration for: $MODEL_NAME"
@@ -230,8 +248,8 @@ if [ "$NODE_RANK" -eq 0 ]; then
     echo "================================================"
     echo "${host_name}:${host_ip} is Proxy Node and Prefill Node"
     echo "Using prefill config: $PREFILL_MODEL_CONFIG"
-    echo "Prefill parallelism: TP=${PREFILL_TP_SIZE}, EP enabled: ${PREFILL_ENABLE_EP}, DP enabled: ${PREFILL_ENABLE_DP}"
-    echo "Decode parallelism: TP=${DECODE_TP_SIZE}, EP enabled: ${DECODE_ENABLE_EP}, DP enabled: ${DECODE_ENABLE_DP}"
+    echo "Prefill parallelism: TP=${PREFILL_TP_SIZE}, EP enabled: ${PREFILL_ENABLE_EP}, DP enabled: ${PREFILL_ENABLE_DP}, MTP size=${DECODE_MTP_SIZE}"
+    echo "Decode  parallelism: TP=${DECODE_TP_SIZE},  EP enabled: ${DECODE_ENABLE_EP},  DP enabled: ${DECODE_ENABLE_DP},  MTP size=${DECODE_MTP_SIZE}"
     echo "Prefill servers ($((PREFILL_TP_SIZE/8)) nodes): ${PREFILL_ARGS}"
     echo "Decode servers  ($((DECODE_TP_SIZE/8))  nodes): ${DECODE_ARGS}"
     echo "================================================"

@@ -24,7 +24,7 @@ export SLURM_PARTITION="Compute-Group01"
 export TIME_LIMIT="24:00:00"
 export MODEL_PATH="/apps/data/models"
 export MODEL_NAME="DeepSeek-R1"
-export CONTAINER_IMAGE="rocm/sgl-dev:sglang-0.5.6.post1-rocm700-mi35x-mori-1218"
+export CONTAINER_IMAGE="rocm/sgl-dev:sglang-0.5.6.post1-rocm700-mi35x-mori-1223"
 export PREFILL_NODES=1
 export PREFILL_WORKERS=1
 export DECODE_NODES=2
@@ -37,6 +37,8 @@ export PREFILL_ENABLE_EP=true
 export PREFILL_ENABLE_DP=true
 export DECODE_ENABLE_EP=true
 export DECODE_ENABLE_DP=true
+# export DECODE_MTP_SIZE=0
+export DECODE_MTP_SIZE=2
 
 bash submit_disagg.sh \
     $PREFILL_NODES $PREFILL_WORKERS $DECODE_NODES $DECODE_WORKERS \

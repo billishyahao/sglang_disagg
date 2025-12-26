@@ -231,9 +231,8 @@ echo ""
 # Node information
 USER_NAME=$(whoami)
 MASTER_NODE=$(echo "$SELECTED_NODES" | head -n 1)
-MASTER_ADDR=$(srun --nodes=1 --ntasks=1 --time=00:20:00 --nodelist="$MASTER_NODE" bash -c 'ip route get 1.1.1.1')
-MASTER_ADDR=$(echo "$MASTER_ADDR" | awk '/src/ {print $7}')
-MASTER_PORT=39566  # Choose an open port
+NODE0_ADDR=$(srun --nodes=1 --ntasks=1 --time=00:20:00 --nodelist="$MASTER_NODE" bash -c 'ip route get 1.1.1.1')
+NODE0_ADDR=$(echo "$NODE0_ADDR" | awk '/src/ {print $7}')
 
 IPS=()
 
@@ -252,8 +251,7 @@ timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
 NNODES=$NUM_NODES
 
 echo "MASTER_NODE is ${MASTER_NODE}"
-echo "MASTER_ADDR is ${MASTER_ADDR}"
-echo "MASTER_PORT is ${MASTER_PORT}"
+echo "NODE0_ADDR is ${NODE0_ADDR}"
 echo "NNODES is ${NNODES}"
 echo "REPO Directory is ${DI_REPO_DIR}"
 echo "USER_NAME is ${USER_NAME}"
@@ -263,8 +261,7 @@ echo "USER_NAME is ${USER_NAME}"
 export DI_REPO_DIR=$DI_REPO_DIR
 export SGL_WS_PATH=$SGL_WS_PATH
 export NNODES=$NNODES
-export MASTER_ADDR=$MASTER_ADDR
-export MASTER_PORT=$MASTER_PORT
+export NODE0_ADDR=$NODE0_ADDR
 export MODEL_PATH=$MODEL_PATH
 export MODEL_DIR=$MODEL_DIR
 export xP=$xP
@@ -287,6 +284,24 @@ export BENCH_MAX_CONCURRENCY=$BENCH_MAX_CONCURRENCY
 
 export DOCKER_CONT_NAME="container_sbatch_${USER_NAME}_${MODEL_NAME}_${SLURM_JOB_ID}"
 export RUN_FILE_FULL="$SGL_WS_PATH/${RUN_FILE}"
+
+
+# Clean-up handler for TERM (and Ctrl-C/INT if you want)
+cleanup() {
+  echo "[${SLURM_JOB_ID}] SIGTERM received; starting clean-up..."
+  # Example: save checkpoint, stop background workers, flush logs
+  # pkill -TERM -P $$   # propagate to child processes if needed
+  # tar -czf state_${SLURM_JOB_ID}.tgz ./state
+  # Optionally, request requeue if your site supports it:
+  # scontrol requeue "${SLURM_JOB_ID}"
+  srun --nodelist="$SELECTED_NODELIST_SRUN" bash -c 'sudo docker stop -f $DOCKER_CONT_NAME'
+  echo "[${SLURM_JOB_ID}] clean-up done."
+  exit 0
+}
+
+
+trap cleanup EXIT INT TERM
+
 
 # Use only the selected nodes for srun execution
 SELECTED_NODELIST_SRUN=$(echo "$SELECTED_NODES" | paste -sd,)
@@ -328,8 +343,7 @@ sudo docker run --rm \
     -e SLURM_JOB_NODELIST=$SLURM_JOB_NODELIST \
     -e NNODES=$NNODES \
     -e NODE_RANK=$SLURM_PROCID  \
-    -e MASTER_ADDR=$MASTER_ADDR \
-    -e MASTER_PORT=$MASTER_PORT \
+    -e NODE0_ADDR=$NODE0_ADDR \
     -e MODEL_DIR=/models    \
     -e SGL_WS_PATH=$SGL_WS_PATH \
     -e xP=$xP \
@@ -359,5 +373,6 @@ if [ $DOCKER_EXIT_CODE -ne 0 ]; then
     exit $DOCKER_EXIT_CODE
 fi
 '
-srun --nodelist="$SELECTED_NODELIST_SRUN" bash -c 'sudo docker rm -f $DOCKER_CONT_NAME'
+
+cleanup
 

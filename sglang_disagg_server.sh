@@ -6,8 +6,7 @@
 # Environment Configuration
 # =============================================================================
 
-MASTER_ADDR="${MASTER_ADDR:-localhost}"
-MASTER_PORT="${MASTER_PORT:-23731}"
+NODE0_ADDR="${NODE0_ADDR:-localhost}"
 NODE_RANK="${NODE_RANK:-0}"
 MODEL_DIR="${MODEL_DIR:-}"
 MODEL_NAME="${MODEL_NAME:-}"
@@ -49,7 +48,7 @@ host_name=$(hostname)
 
 # Common configurations shared by both prefill and decode (base)
 declare -A MODEL_BASE_CONFIGS=(
-    ["DeepSeek-R1"]="--decode-log-interval 1 --watchdog-timeout 1000000 --chunked-prefill-size 262144 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter"
+    ["DeepSeek-R1"]="--decode-log-interval 1 --watchdog-timeout 3600 --chunked-prefill-size 262144 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter"
 )
 
 
@@ -282,6 +281,8 @@ if [ "$NODE_RANK" -eq 0 ]; then
         --node-ports 8000 \
         --timeout 1200
 
+    echo "Congratulations!!! All prefill and decode servers are up . . ."
+
     set -x 
     python -m sglang_router.launch_router \
     --pd-disaggregation \
@@ -350,10 +351,10 @@ elif [ "$NODE_RANK" -gt 0 ] && [ "$NODE_RANK" -lt "$NODE_OFFSET" ]; then
 
     echo "Waiting until proxy server closes..."
     python $SGL_WS_PATH/socket_wait.py \
-        --remote-ip ${MASTER_ADDR} \
+        --remote-ip ${NODE0_ADDR} \
         --remote-port 30000
 
-    echo "Killing the prefill server"
+    echo "Killing the rank $NODE_RANK prefill server"
     kill $prefill_pid
 
 else
@@ -393,10 +394,10 @@ else
 
     echo "Waiting until proxy server closes..."
     python $SGL_WS_PATH/socket_wait.py \
-        --remote-ip ${MASTER_ADDR} \
+        --remote-ip ${NODE0_ADDR} \
         --remote-port 30000
 
-    echo "Killing the decode server"
+    echo "Killing the rank $RANK decode server"
     kill $decode_pid
 
 fi

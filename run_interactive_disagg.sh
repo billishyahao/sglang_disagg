@@ -2,7 +2,7 @@
 
 # Before running this code - request 5 nodes from salloc 
 # salloc -N 5 --ntasks-per-node=1 --nodelist=<Nodes> --gres=gpu:8 -p <partition> -t 12:00:00
-#Sample Commands
+# Sample Commands
 # Parallelism Configuration:
 # PREFILL_TP_SIZE: Tensor Parallelism size for Prefill nodes (default: 8)
 # PREFILL_ENABLE_EP: Enable Expert Parallelism for Prefill nodes (true/false, default: true)
@@ -30,7 +30,7 @@ export PREFILL_ENABLE_DP=true
 export DECODE_TP_SIZE=16
 export DECODE_ENABLE_EP=true
 export DECODE_ENABLE_DP=true
-export DECODE_MTP_SIZE=0
+export DECODE_MTP_SIZE=2
 export BENCH_INPUT_LEN=1024
 export BENCH_OUTPUT_LEN=1024
 export BENCH_RANDOM_RANGE_RATIO=1

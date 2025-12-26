@@ -11,7 +11,7 @@ This repository contains scripts and documentation to launch multi nodes distrib
 ## 📝 Prerequisites
 
 - A Slurm cluster with required Nodes -> xP + yD  (minimum size 2: xP=1 and yD=1)
-- A prebuilt rocm docker image supporting MI355(GFX950) contains all dependency library including SGLang, AITER, MoRI, AINIC driver e.g. `rocm/sgl-dev:sglang-0.5.6.post1-rocm700-mi35x-mori-1223`
+- A prebuilt rocm docker image supporting MI355(GFX950) contains all dependency library including SGLang, AITER, MoRI, AINIC driver e.g. `rocm/sgl-dev:sglang-0.5.6.post1-rocm700-mi35x-mori-1224`
 - Access to a shared filesystem for log collection( cluster specific)
 
 

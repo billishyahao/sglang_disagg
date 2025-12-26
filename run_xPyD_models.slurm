@@ -43,7 +43,7 @@ else
     exit 1
 fi
 
-export DOCKER_IMAGE_NAME="${DOCKER_IMAGE_NAME:-rocm/sgl-dev:sglang-0.5.6.post1-rocm700-mi35x-mori-1223}"
+export DOCKER_IMAGE_NAME="${DOCKER_IMAGE_NAME:-rocm/sgl-dev:sglang-0.5.6.post1-rocm700-mi35x-mori-1224}"
 if test -z "${DOCKER_IMAGE_NAME}"; then
   echo "Error: DOCKER_IMAGE_NAME is not set or empty."
   exit 1
@@ -291,10 +291,11 @@ export RUN_FILE_FULL="$SGL_WS_PATH/${RUN_FILE}"
 # Use only the selected nodes for srun execution
 SELECTED_NODELIST_SRUN=$(echo "$SELECTED_NODES" | paste -sd,)
 
-# sudo docker ps -q | xargs --no-run-if-empty sudo docker stop;
+# Remove all containers with prefix `container_sbatch_` before running the new job so making it idempotent
 
 srun --nodelist="$SELECTED_NODELIST_SRUN" bash -c '
 echo "Rank $SLURM_PROCID on $(hostname)";
+sudo docker ps --filter "name=^container_sbatch_" --format "{{.ID}}" | xargs --no-run-if-empty sudo docker stop;
 sudo docker run --rm \
     --device /dev/dri \
     --device /dev/kfd \

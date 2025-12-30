@@ -212,7 +212,7 @@ run_benchmark_serving() {
 
     # Clone benchmark serving repo
     local BENCH_SERVING_DIR=$(mktemp -d /tmp/bmk-XXXXXX)
-    git clone https://github.com/cquil11/bench_serving.git "$BENCH_SERVING_DIR"
+    git clone --branch mi355x-disagg https://github.com/cquil11/bench_serving.git "$BENCH_SERVING_DIR"
 
     # Run benchmark
     set -x

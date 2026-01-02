@@ -2,6 +2,7 @@ import socket
 import time
 import threading
 import argparse
+import sys
 
 # Parse command-line arguments
 parser = argparse.ArgumentParser(description="Optionally open and close a port on the local node.")
@@ -10,6 +11,7 @@ parser.add_argument("--local-port", type=int, required=False, help="Port number 
 parser.add_argument("--enable-port", action="store_true", help="Enable opening and closing of local port.")
 parser.add_argument("--node-ips", required=True, help="Comma-separated list of node IPs.")
 parser.add_argument("--node-ports", required=True, help="Comma-separated list of ports to check.")
+parser.add_argument("--timeout", type=int, default=600, help="Timeout in seconds for waiting on all ports (default: 600s / 10 minutes). Set to 0 for no timeout.")
 args = parser.parse_args()
 
 # Parse node IPs and ports from command-line arguments
@@ -32,12 +34,32 @@ def is_port_open(ip, port):
         return s.connect_ex((ip, port)) == 0
 
 def wait_for_all_ports():
-    """Wait until all nodes have opened the specified ports."""
+    """Wait until all nodes have opened the specified ports, with optional timeout."""
+    start_time = time.time()
+    timeout = args.timeout
+
     while True:
+        # Check for timeout (if timeout > 0)
+        if timeout > 0:
+            elapsed = time.time() - start_time
+            if elapsed >= timeout:
+                # Report which nodes/ports are still not responding
+                not_open = [(ip, port) for ip, port in zip(NODE_IPS, NODE_PORTS) if not is_port_open(ip, port)]
+                print(f"ERROR: Timeout after {timeout} seconds waiting for ports to open.", flush=True)
+                print(f"The following nodes/ports are still not responding:", flush=True)
+                for ip, port in not_open:
+                    print(f"  - {ip}:{port}", flush=True)
+                sys.exit(1)
+
         all_open = all(is_port_open(ip, port) for ip, port in zip(NODE_IPS, NODE_PORTS))
         if all_open:
             break
-        print(f"Waiting for nodes.{NODE_PORTS},{NODE_IPS} . .", flush=True)
+
+        if timeout > 0:
+            remaining = timeout - (time.time() - start_time)
+            print(f"Waiting for nodes.{NODE_PORTS},{NODE_IPS} . . ({remaining:.0f}s remaining)", flush=True)
+        else:
+            print(f"Waiting for nodes.{NODE_PORTS},{NODE_IPS} . .", flush=True)
         time.sleep(5)
 
 def open_port():

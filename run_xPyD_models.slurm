@@ -293,9 +293,22 @@ SELECTED_NODELIST_SRUN=$(echo "$SELECTED_NODES" | paste -sd,)
 
 # Remove all containers with prefix `container_sbatch_` before running the new job so making it idempotent
 
+# Force NFS cache refresh on all nodes before running Docker to avoid stale file handle errors
+echo "Refreshing NFS caches on all nodes..."
+srun --nodelist="$SELECTED_NODELIST_SRUN" bash -c '
+    sync
+    # Force re-stat of the mounted directory to refresh NFS handles
+    ls -la '"$DI_REPO_DIR"' > /dev/null 2>&1
+    stat '"$DI_REPO_DIR"'/sglang_disagg_server.sh > /dev/null 2>&1
+    cat '"$DI_REPO_DIR"'/sglang_disagg_server.sh > /dev/null 2>&1
+    # Drop caches if we have permission (optional, requires root)
+    echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null 2>&1 || true
+    echo "NFS cache refreshed on $(hostname)"
+'
+
 srun --nodelist="$SELECTED_NODELIST_SRUN" bash -c '
 echo "Rank $SLURM_PROCID on $(hostname)";
-sudo docker ps --filter "name=^container_sbatch_" --format "{{.ID}}" | xargs --no-run-if-empty sudo docker stop;
+sudo docker ps --filter "name=^container_sbatch_" --format "{{.ID}}" | xargs --no-run-if-empty sudo docker stop || true;
 sudo docker run --rm \
     --device /dev/dri \
     --device /dev/kfd \
@@ -340,6 +353,11 @@ sudo docker run --rm \
         mkdir -p /run_logs/slurm_job-${SLURM_JOB_ID}
         $RUN_FILE_FULL 2>&1 | tee /run_logs/slurm_job-${SLURM_JOB_ID}/pd_sglang_bench_serving.sh_NODE${SLURM_PROCID}.log
     "
+DOCKER_EXIT_CODE=$?
+if [ $DOCKER_EXIT_CODE -ne 0 ]; then
+    echo "ERROR: Docker container on $(hostname) exited with code $DOCKER_EXIT_CODE"
+    exit $DOCKER_EXIT_CODE
+fi
 '
 srun --nodelist="$SELECTED_NODELIST_SRUN" bash -c 'sudo docker rm -f $DOCKER_CONT_NAME'
 

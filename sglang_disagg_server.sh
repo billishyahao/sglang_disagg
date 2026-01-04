@@ -229,7 +229,8 @@ python $SGL_WS_PATH/socket_barrier.py \
     --local-port 5000 \
     --enable-port \
     --node-ips ${IPADDRS} \
-    --node-ports 5000
+    --node-ports 5000 \
+    --timeout 300
 
 
 # =============================================================================
@@ -278,7 +279,8 @@ if [ "$NODE_RANK" -eq 0 ]; then
     echo "Waiting for all prefill and decode servers to be up . . ."
     python $SGL_WS_PATH/socket_barrier.py \
         --node-ips ${IPADDRS} \
-        --node-ports 8000
+        --node-ports 8000 \
+        --timeout 1200
 
     set -x 
     python -m sglang_router.launch_router \
@@ -342,9 +344,10 @@ elif [ "$NODE_RANK" -gt 0 ] && [ "$NODE_RANK" -lt "$NODE_OFFSET" ]; then
 
     echo "Waiting for proxy server to be up..."
     python $SGL_WS_PATH/socket_barrier.py \
-        --node-ips ${MASTER_ADDR} \
-        --node-ports 30000
-    
+        --node-ips ${NODE0_ADDR} \
+        --node-ports 30000 \
+        --timeout 1200
+
     echo "Waiting until proxy server closes..."
     python $SGL_WS_PATH/socket_wait.py \
         --remote-ip ${MASTER_ADDR} \
@@ -384,9 +387,10 @@ else
 
     echo "Waiting for proxy server to be up..."
     python $SGL_WS_PATH/socket_barrier.py \
-        --node-ips ${MASTER_ADDR} \
-        --node-ports 30000
-    
+        --node-ips ${NODE0_ADDR} \
+        --node-ports 30000 \
+        --timeout 1200
+
     echo "Waiting until proxy server closes..."
     python $SGL_WS_PATH/socket_wait.py \
         --remote-ip ${MASTER_ADDR} \

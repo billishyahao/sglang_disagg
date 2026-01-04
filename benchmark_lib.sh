@@ -212,7 +212,7 @@ run_benchmark_serving() {
 
     # Clone benchmark serving repo
     local BENCH_SERVING_DIR=$(mktemp -d /tmp/bmk-XXXXXX)
-    git clone https://github.com/kimbochen/bench_serving.git "$BENCH_SERVING_DIR"
+    git clone --branch mi355x-disagg https://github.com/cquil11/bench_serving.git "$BENCH_SERVING_DIR"
 
     # Run benchmark
     set -x
@@ -229,6 +229,7 @@ run_benchmark_serving() {
         --request-rate inf \
         --ignore-eos \
         --save-result \
+        --save-aggregated-only \
         --percentile-metrics 'ttft,tpot,itl,e2el' \
         --result-dir "$result_dir" \
         --result-filename "$result_filename.json"

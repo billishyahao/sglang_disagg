@@ -238,7 +238,7 @@ IPS=()
 
 GW_NIC=$(ip route | awk '/^default/ {print $5; exit}')
 for NODE in $SELECTED_NODES; do
-    IP=$(srun --nodes=1 --ntarun_xPyD_models.slurmsks=1 --time=00:20:00 --nodelist="$NODE" bash -c 'ip route get 1.1.1.1')
+    IP=$(srun --nodes=1 --ntasks=1 --time=00:20:00 --nodelist="$NODE" bash -c 'ip route get 1.1.1.1')
     IP=$(echo "$IP" | awk '/src/ {print $7}')
     IPS+=("$IP")
 done

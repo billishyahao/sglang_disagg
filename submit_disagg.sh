@@ -100,7 +100,6 @@ sbatch_cmd=(
     --partition "$SLURM_PARTITION" 
     --account "$SLURM_ACCOUNT"
     --job-name ${xP}p${yD}d_bench-serving
-    --nodelist "mia1-p01-g10,mia1-p01-g11,mia1-p01-g12"
     run_xPyD_models.slurm
 )
 

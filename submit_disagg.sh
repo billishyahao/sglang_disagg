@@ -95,15 +95,20 @@ export BENCH_REQUEST_RATE=${REQUEST_RATE}
 # Construct the sbatch command
 sbatch_cmd=(
     sbatch
-    -N "$NUM_NODES" 
-    -n "$NUM_NODES" 
-    --time "$TIME_LIMIT" 
-    --partition "$SLURM_PARTITION" 
+    --parsable
+    -N "$NUM_NODES"
+    -n "$NUM_NODES"
+    --time "$TIME_LIMIT"
+    --partition "$SLURM_PARTITION"
     --account "$SLURM_ACCOUNT"
     --exclude smci355-ccs-aus-n08-[21,25,29]
     --job-name ${xP}p${yD}d_bench-serving
     run_xPyD_models.slurm
 )
 
-echo "Running: ${sbatch_cmd[*]}"
-"${sbatch_cmd[@]}"
+JOB_ID=$("${sbatch_cmd[@]}")
+if [[ $? -ne 0 ]]; then
+    echo "Error: Failed to submit job with sbatch" >&2
+    exit 1
+fi
+echo "$JOB_ID"

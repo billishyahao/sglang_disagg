@@ -40,8 +40,15 @@ export DECODE_ENABLE_EP=true
 export DECODE_ENABLE_DP=true
 export DECODE_MTP_SIZE=2
 
-bash submit_disagg.sh \
+JOB_ID=$(bash submit_disagg.sh \
     $PREFILL_NODES $PREFILL_WORKERS $DECODE_NODES $DECODE_WORKERS \
     $ISL $OSL $CONCURRENCIES $REQUEST_RATE \
     $PREFILL_ENABLE_EP $PREFILL_ENABLE_DP \
-    $DECODE_ENABLE_EP $DECODE_ENABLE_DP
+    $DECODE_ENABLE_EP $DECODE_ENABLE_DP)
+
+if [[ $? -ne 0 ]]; then
+    echo "Failed to submit job" >&2
+    exit 1
+fi
+
+echo "$JOB_ID"

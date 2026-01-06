@@ -104,6 +104,7 @@ sbatch_cmd=(
     run_xPyD_models.slurm
 )
 
+# todo: --parsable outputs only the jobid and cluster name, test if jobid;clustername is correct
 JOB_ID=$("${sbatch_cmd[@]}")
 if [[ $? -ne 0 ]]; then
     echo "Error: Failed to submit job with sbatch" >&2

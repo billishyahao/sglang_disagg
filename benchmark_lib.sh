@@ -245,6 +245,7 @@ run_benchmark_serving() {
         --request-rate inf
         --ignore-eos
         --save-result
+        --save-aggregated-only
         --percentile-metrics 'ttft,tpot,itl,e2el'
         --result-dir "$result_dir"
         --result-filename "$result_filename.json"

@@ -39,3 +39,15 @@ export SGLANG_DISAGGREGATION_WAITING_TIMEOUT=1200
 
 export SGLANG_MORI_FP8_DISP=True
 export SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK=16384
+export MORI_APP_LOG_LEVEL=INFO
+
+ND_PRIO=$(nicctl show qos  2>/dev/null | awk '/PFC no-drop priorities/ {print $NF; exit}')
+ND_DSCP=$(nicctl show qos 2>/dev/null| awk -v p="$ND_PRIO" '
+$1 == "DSCP" && $2 == ":" && $NF == p {
+    print $3; exit
+}')
+
+TC=$(( 4 * $ND_DSCP ))
+
+export MORI_RDMA_SL=$ND_PRIO
+export MORI_RDMA_TC=$TC

@@ -256,6 +256,11 @@ echo "NNODES is ${NNODES}"
 echo "REPO Directory is ${DI_REPO_DIR}"
 echo "USER_NAME is ${USER_NAME}"
 
+# Get the RDMA priority and DSCP value from the NIC
+if ! command -v nicctl >/dev/null 2>&1; then
+    echo "Error: nicctl command not found. Please ensure nicctl is installed and available." >&2
+    exit 1
+fi
 
 
 export DI_REPO_DIR=$DI_REPO_DIR
@@ -341,6 +346,7 @@ exec docker run --rm \
     --privileged \
     -v ${MODEL_DIR}:/models \
     -v \$HOME/.ssh:/root/.ssh \
+    -v $(which nicctl):/usr/sbin/nicctl \
     --shm-size 128G \
     -v /tmp:/run_logs \
     -v ${DI_REPO_DIR}:${SGL_WS_PATH} \

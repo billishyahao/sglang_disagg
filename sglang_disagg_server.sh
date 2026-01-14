@@ -36,8 +36,9 @@ BENCH_MAX_CONCURRENCY="${BENCH_MAX_CONCURRENCY:-512}"
 # =============================================================================
 # Dependencies and Environment Setup
 # =============================================================================
-
+set -x 
 source $SGL_WS_PATH/set_env_vars.sh
+set +x
 
 host_ip=$(ip route get 1.1.1.1 | awk '/src/ {print $7}')
 host_name=$(hostname)

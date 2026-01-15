@@ -35,13 +35,38 @@ BENCH_MAX_CONCURRENCY="${BENCH_MAX_CONCURRENCY:-512}"
 
 # =============================================================================
 # Dependencies and Environment Setup
-# =============================================================================
-set -x 
+# ============================================================================= 
 source $SGL_WS_PATH/set_env_vars.sh
-set +x
 
 host_ip=$(ip route get 1.1.1.1 | awk '/src/ {print $7}')
 host_name=$(hostname)
+
+# Validate MORI_RDMA_TC and hostname consistency
+if [[ -n "${MORI_RDMA_TC}" ]]; then
+    echo "MORI_RDMA_TC is set to: $MORI_RDMA_TC"
+
+    if [[ "$MORI_RDMA_TC" -eq 104 ]]; then
+        if [[ "$host_name" != mia1* ]]; then
+            echo "ERROR: MORI_RDMA_TC=104 but hostname '$host_name' does not start with 'mia1'"
+            exit 1
+        else
+            echo "Hostname '$host_name' correctly starts with 'GPU' for MORI_RDMA_TC=104"
+        fi
+    elif [[ "$MORI_RDMA_TC" -eq 96 ]]; then
+        if [[ "$host_name" != GPU* ]]; then
+            echo "ERROR: MORI_RDMA_TC=96 but hostname '$host_name' does not start with 'GPU'"
+            exit 1
+        else
+            echo "Hostname '$host_name' correctly starts with 'mial' for MORI_RDMA_TC=96"
+        fi
+    else
+        echo "ERROR: MORI_RDMA_TC=$MORI_RDMA_TC is neither 104 nor 96. Please configure the correct value."
+        exit 1
+    fi
+else
+    echo "ERROR: MORI_RDMA_TC is not set. "
+    exit 1
+fi
 
 # =============================================================================
 # Model-Specific Configuration Maps

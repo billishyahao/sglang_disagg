@@ -263,6 +263,16 @@ if ! command -v nicctl >/dev/null 2>&1; then
 fi
 
 
+set -x
+
+echo "TTY=$(tty || echo no-tty)"
+sudo -n true && echo "sudo_nopasswd=YES" || echo "sudo_nopasswd=NO (or blocked)"
+sudo -l 2>&1 | head -n 5
+command -v docker || echo "docker not in PATH"
+
+set +x
+
+
 export DI_REPO_DIR=$DI_REPO_DIR
 export SGL_WS_PATH=$SGL_WS_PATH
 export NNODES=$NNODES

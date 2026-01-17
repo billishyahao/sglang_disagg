@@ -332,6 +332,7 @@ echo \"Rank \$SLURM_PROCID on \$(hostname)\"
 
 # Pre-clean (idempotent)
 sudo docker ps -aq --filter \"name=^container_sbatch_\" | xargs -r sudo docker rm -f || true
+sudo docker ps -aq | xargs -r sudo docker stop || true
 
 exec sudo docker run --rm \
     --init \

@@ -48,7 +48,7 @@ host_name=$(hostname)
 
 # Common configurations shared by both prefill and decode (base)
 declare -A MODEL_BASE_CONFIGS=(
-    ["DeepSeek-R1"]="--decode-log-interval 1 --watchdog-timeout 3600 --chunked-prefill-size 262144 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter"
+    ["DeepSeek-R1"]="--decode-log-interval 1 --watchdog-timeout 3600 --chunked-prefill-size 16384 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter"
 )
 
 

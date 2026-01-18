@@ -55,8 +55,11 @@ export SGLANG_USE_AITER=1
 export SGLANG_DISAGGREGATION_BOOTSTRAP_TIMEOUT=1200
 export SGLANG_DISAGGREGATION_WAITING_TIMEOUT=1200
 
+# disable alloc the memory in one pass
+export MORI_SHMEM_MODE=ISOLATION
 export SGLANG_MORI_FP8_DISP=True
 export SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK=16384
+
 export MORI_APP_LOG_LEVEL=INFO
 
 ND_PRIO=$(nicctl show qos  2>/dev/null | awk '/PFC no-drop priorities/ {print $NF; exit}')

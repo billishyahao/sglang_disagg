@@ -101,7 +101,7 @@ sbatch_cmd=(
     --time "$TIME_LIMIT"
     --partition "$SLURM_PARTITION"
     --account "$SLURM_ACCOUNT"
-    --exclude smci355-ccs-aus-n08-[21,25,29]
+    --exclude smci355-ccs-aus-n08-[25,33],smci355-ccs-aus-n09-[21,25,29,33]
     --job-name ${xP}p${yD}d_bench-serving
     run_xPyD_models.slurm
 )

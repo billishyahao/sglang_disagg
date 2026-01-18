@@ -93,6 +93,7 @@ export BENCH_MAX_CONCURRENCY=${CONCURRENCIES}
 export BENCH_REQUEST_RATE=${REQUEST_RATE}
 
 # Construct the sbatch command
+# Full nodelist: smci355-ccs-aus-n06-21,smci355-ccs-aus-n08-[21,25,29,33],smci355-ccs-aus-n09-[21,25,29,33]
 sbatch_cmd=(
     sbatch
     --parsable
@@ -101,7 +102,7 @@ sbatch_cmd=(
     --time "$TIME_LIMIT"
     --partition "$SLURM_PARTITION"
     --account "$SLURM_ACCOUNT"
-    --exclude smci355-ccs-aus-n08-[25,33],smci355-ccs-aus-n09-[21,25,29,33]
+    --exclude smci355-ccs-aus-n08-[21,25,29,33],smci355-ccs-aus-n09-[21,25]
     --job-name ${xP}p${yD}d_bench-serving
     run_xPyD_models.slurm
 )

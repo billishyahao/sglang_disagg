@@ -287,7 +287,8 @@ export BENCH_RANDOM_RANGE_RATIO=$BENCH_RANDOM_RANGE_RATIO
 export BENCH_NUM_PROMPTS_MULTIPLIER=$BENCH_NUM_PROMPTS_MULTIPLIER
 export BENCH_MAX_CONCURRENCY=$BENCH_MAX_CONCURRENCY
 
-export DOCKER_CONT_NAME="container_sbatch_${USER_NAME}_${MODEL_NAME}_${SLURM_JOB_ID}"
+SANITIZED_USER=$(echo "$USER_NAME" | tr -c 'a-zA-Z0-9_.-' '_')                                                                                                                                                                                                                                                                                                                                                               
+export DOCKER_CONT_NAME="container_sbatch_${SANITIZED_USER}_${MODEL_NAME}_${SLURM_JOB_ID}"  
 export RUN_FILE_FULL="$SGL_WS_PATH/${RUN_FILE}"
 
 

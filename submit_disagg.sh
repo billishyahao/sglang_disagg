@@ -42,6 +42,7 @@ check_env MODEL_PATH
 check_env MODEL_NAME
 # check_env CONFIG_DIR
 check_env CONTAINER_IMAGE
+check_env RUNNER_NAME
 
 
 # GPU_TYPE="mi300x"
@@ -101,7 +102,7 @@ sbatch_cmd=(
     --time "$TIME_LIMIT"
     --partition "$SLURM_PARTITION"
     --account "$SLURM_ACCOUNT"
-    --job-name ${xP}p${yD}d_bench-serving
+    --job-name "$RUNNER_NAME"
     run_xPyD_models.slurm
 )
 

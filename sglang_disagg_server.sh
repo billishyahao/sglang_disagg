@@ -50,14 +50,14 @@ if [[ -n "${MORI_RDMA_TC}" ]]; then
             echo "ERROR: MORI_RDMA_TC=104 but hostname '$host_name' does not start with 'mia1'"
             exit 1
         else
-            echo "Hostname '$host_name' correctly starts with 'GPU' for MORI_RDMA_TC=104"
+            echo "Hostname '$host_name' correctly starts with 'mia1' for MORI_RDMA_TC=104"
         fi
     elif [[ "$MORI_RDMA_TC" -eq 96 ]]; then
         if [[ "$host_name" != GPU* ]]; then
             echo "ERROR: MORI_RDMA_TC=96 but hostname '$host_name' does not start with 'GPU'"
             exit 1
         else
-            echo "Hostname '$host_name' correctly starts with 'mial' for MORI_RDMA_TC=96"
+            echo "Hostname '$host_name' correctly starts with 'GPU' for MORI_RDMA_TC=96"
         fi
     else
         echo "ERROR: MORI_RDMA_TC=$MORI_RDMA_TC is neither 104 nor 96. Please configure the correct value."
@@ -334,10 +334,14 @@ if [ "$NODE_RANK" -eq 0 ]; then
     cd /sglang_disagg
 
     # n_prefill n_decode prefill_gpus decode_gpus model_dir model_name log_path isl osl concurrency_list req_rate random_range_ratio num_prompts_multiplier
-    bash /sglang_disagg/bench.sh ${xP} ${yD} $((PREFILL_TP_SIZE*xP)) $((DECODE_TP_SIZE*yD)) \
+    BENCH_CMD="bash /sglang_disagg/bench.sh ${xP} ${yD} $((PREFILL_TP_SIZE*xP)) $((DECODE_TP_SIZE*yD)) \
         $MODEL_DIR $MODEL_NAME /run_logs/slurm_job-${SLURM_JOB_ID} ${BENCH_INPUT_LEN} \
-        ${BENCH_OUTPUT_LEN} "${BENCH_MAX_CONCURRENCY}" ${BENCH_REQUEST_RATE} \
-        ${BENCH_RANDOM_RANGE_RATIO} ${BENCH_NUM_PROMPTS_MULTIPLIER}
+        ${BENCH_OUTPUT_LEN} \"${BENCH_MAX_CONCURRENCY}\" ${BENCH_REQUEST_RATE} \
+        ${BENCH_RANDOM_RANGE_RATIO} ${BENCH_NUM_PROMPTS_MULTIPLIER}"
+
+    echo "Bench command: $BENCH_CMD"
+    echo "Sleeping for 10 seconds before executing benchmark..."
+    sleep 1000000000000000
 
     if [ ! -d /sglang_disagg/logs ]; then
         mkdir -p /sglang_disagg/logs

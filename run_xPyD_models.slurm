@@ -376,6 +376,7 @@ exec sudo docker run --rm \
     -e BENCH_RANDOM_RANGE_RATIO=\$BENCH_RANDOM_RANGE_RATIO \
     -e BENCH_NUM_PROMPTS_MULTIPLIER=\$BENCH_NUM_PROMPTS_MULTIPLIER \
     -e BENCH_MAX_CONCURRENCY=\$BENCH_MAX_CONCURRENCY \
+    -e SGLANG_TORCH_PROFILER_DIR=/run_logs/slurm_job-\$SLURM_JOB_ID \
     --name \"$DOCKER_CONT_NAME\" \
     \"$DOCKER_IMAGE_NAME\" bash -lc '
         mkdir -p /run_logs/slurm_job-'\"\$SLURM_JOB_ID\"'

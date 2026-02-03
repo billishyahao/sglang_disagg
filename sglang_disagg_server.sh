@@ -33,6 +33,10 @@ BENCH_REQUEST_RATE="${BENCH_REQUEST_RATE:-inf}"
 BENCH_NUM_PROMPTS_MULTIPLIER="${BENCH_NUM_PROMPTS_MULTIPLIER:-10}"
 BENCH_MAX_CONCURRENCY="${BENCH_MAX_CONCURRENCY:-512}"
 
+# Dry Run for debugging purpose
+DRY_RUN="${DRY_RUN:-1}"
+
+
 # =============================================================================
 # Dependencies and Environment Setup
 # =============================================================================
@@ -307,32 +311,51 @@ if [ "$NODE_RANK" -eq 0 ]; then
         PREFILL_CMD="$PREFILL_CMD --dist-init-addr ${PREFILL_HEADNODE_URLS[0]} --nnodes ${$PREFILL_NODES_PER_WORKER} --node-rank 0"
     fi
 
-    set -x 
-    eval "$PREFILL_CMD" \
-        2>&1 | tee /run_logs/slurm_job-${SLURM_JOB_ID}/prefill_NODE${NODE_RANK}.log >/dev/null &
-    set +x
 
-    prefill0_pid=$!
+    if [[ "$DRY_RUN" -eq 1 ]]; then
+        echo "DRY RUN: $PREFILL_CMD"
+    else
+        set -x
+        eval "$PREFILL_CMD" \
+            2>&1 | tee /run_logs/slurm_job-${SLURM_JOB_ID}/prefill_NODE${NODE_RANK}.log >/dev/null &
+        set +x
+        prefill0_pid=$!
+    fi
+
     
     echo "Waiting for all prefill and decode servers to be up . . ."
-    python $SGL_WS_PATH/socket_barrier.py \
+
+
+    BARRIER_CMD="python $SGL_WS_PATH/socket_barrier.py \
         --node-ips ${IPADDRS} \
         --node-ports 8000 \
-        --timeout 1800
+        --timeout 1800"
 
+    if [[ "$DRY_RUN" -eq 1 ]]; then
+        echo "DRY RUN: $BARRIER_CMD"
+    else
+        eval "$BARRIER_CMD"
+    fi
     echo "Congratulations!!! All prefill and decode servers are up . . ."
 
-    set -x 
-    python -m sglang_router.launch_router \
-    --pd-disaggregation \
-    --mini-lb \
-    --port 30000 \
-    ${PREFILL_ARGS} \
-    ${DECODE_ARGS} \
-    2>&1 | tee /run_logs/slurm_job-${SLURM_JOB_ID}/proxy_NODE${NODE_RANK}.log >/dev/null &
-    set +x
+    ROUTER_CMD="python -m sglang_router.launch_router \
+        --pd-disaggregation \
+        --mini-lb \
+        --port 30000 \
+        ${PREFILL_ARGS} \
+        ${DECODE_ARGS}"
+
+
+    if [[ "$DRY_RUN" -eq 1 ]]; then
+        echo "DRY RUN: $ROUTER_CMD"
+    else
+        set -x
+        eval "$ROUTER_CMD" \
+            2>&1 | tee /run_logs/slurm_job-${SLURM_JOB_ID}/proxy_NODE${NODE_RANK}.log >/dev/null &
+        set +x
+        proxy_pid=$!
+    fi
     
-    proxy_pid=$!
 
     echo "Ready for benchmarking on ${host_name}:${host_ip}"
 
@@ -340,10 +363,18 @@ if [ "$NODE_RANK" -eq 0 ]; then
     cd /sglang_disagg
 
     # n_prefill n_decode prefill_gpus decode_gpus model_dir model_name log_path isl osl concurrency_list req_rate random_range_ratio num_prompts_multiplier
-    bash /sglang_disagg/bench.sh ${xP} ${yD} $((PREFILL_TP_SIZE*xP)) $((DECODE_TP_SIZE*yD)) \
+    BENCH_CMD="bash /sglang_disagg/bench.sh ${xP} ${yD} $((PREFILL_TP_SIZE*xP)) $((DECODE_TP_SIZE*yD)) \
         $MODEL_DIR $MODEL_NAME /run_logs/slurm_job-${SLURM_JOB_ID} ${BENCH_INPUT_LEN} \
         ${BENCH_OUTPUT_LEN} "${BENCH_MAX_CONCURRENCY}" ${BENCH_REQUEST_RATE} \
-        ${BENCH_RANDOM_RANGE_RATIO} ${BENCH_NUM_PROMPTS_MULTIPLIER}
+        ${BENCH_RANDOM_RANGE_RATIO} ${BENCH_NUM_PROMPTS_MULTIPLIER}"
+
+    if [[ "$DRY_RUN" -eq 1 ]]; then
+        echo "DRY RUN: $BENCH_CMD"
+    else
+        set -x
+        eval "$BENCH_CMD"
+        set +x
+    fi
 
     if [ ! -d /sglang_disagg/logs ]; then
         mkdir -p /sglang_disagg/logs
@@ -354,8 +385,11 @@ if [ "$NODE_RANK" -eq 0 ]; then
     cp -r /run_logs/slurm_job-${SLURM_JOB_ID} /sglang_disagg/logs/
  
     echo "Killing the proxy server and prefill server"
-    kill $proxy_pid
-    kill $prefill0_pid
+
+    if [[ "$DRY_RUN" -eq 0 ]]; then
+        kill $proxy_pid
+        kill $prefill0_pid
+    fi
 
 elif [ "$NODE_RANK" -gt 0 ] && [ "$NODE_RANK" -lt "$NODE_OFFSET" ]; then
     echo "${host_name}:${host_ip} is Prefill Node (Model: ${MODEL_NAME:-'default'})"
@@ -377,27 +411,44 @@ elif [ "$NODE_RANK" -gt 0 ] && [ "$NODE_RANK" -lt "$NODE_OFFSET" ]; then
         PREFILL_CMD="$PREFILL_CMD --dist-init-addr ${PREFILL_HEADNODE_URLS[$prefill_idx]} --nnodes ${$PREFILL_NODES_PER_WORKER} --node-rank $rank"
     fi
 
-    set -x 
-    
-    eval "$PREFILL_CMD" \
-        2>&1 | tee /run_logs/slurm_job-${SLURM_JOB_ID}/prefill_NODE${NODE_RANK}.log >/dev/null &
-    set +x
-
-    prefill_pid=$!
+    if [[ "$DRY_RUN" -eq 1 ]]; then
+        echo "DRY RUN: $PREFILL_CMD"
+    else
+        set -x
+        eval "$PREFILL_CMD" \
+            2>&1 | tee /run_logs/slurm_job-${SLURM_JOB_ID}/prefill_NODE${NODE_RANK}.log >/dev/null &
+        set +x
+        prefill_pid=$!
+    fi
 
     echo "Waiting for proxy server to be up..."
-    python $SGL_WS_PATH/socket_barrier.py \
+    BARRIER_CMD="python $SGL_WS_PATH/socket_barrier.py \
         --node-ips ${NODE0_ADDR} \
         --node-ports 30000 \
-        --timeout 1800
+        --timeout 1800"
+
+    if [[ "$DRY_RUN" -eq 1 ]]; then
+        echo "DRY RUN: $BARRIER_CMD"
+    else
+        eval "$BARRIER_CMD"
+    fi
 
     echo "Waiting until proxy server closes..."
-    python $SGL_WS_PATH/socket_wait.py \
+    WAIT_CMD="python $SGL_WS_PATH/socket_wait.py \
         --remote-ip ${NODE0_ADDR} \
-        --remote-port 30000
+        --remote-port 30000"
+
+    if [[ "$DRY_RUN" -eq 1 ]]; then
+        echo "DRY RUN: $WAIT_CMD"
+    else
+        eval "$WAIT_CMD"
+    fi
 
     echo "Killing the rank $NODE_RANK prefill server"
-    kill $prefill_pid
+
+    if [[ "$DRY_RUN" -eq 0 ]]; then
+        kill $prefill_pid
+    fi
 
 else
     RANK=$((NODE_RANK - xP * PREFILL_NODES_PER_WORKER))
@@ -421,26 +472,46 @@ else
         DECODE_CMD="$DECODE_CMD --dist-init-addr ${DECODE_HEADNODE_URLS[$decode_idx]} --nnodes ${DECODE_NODES_PER_WORKER} --node-rank $rank"
     fi
 
-    set -x 
-    eval "$DECODE_CMD" \
-        2>&1 | tee /run_logs/slurm_job-${SLURM_JOB_ID}/decode_NODE${NODE_RANK}.log >/dev/null &
-    
-    decode_pid=$!
-    set +x 
+    if [[ "$DRY_RUN" -eq 1 ]]; then
+        echo "DRY RUN: $DECODE_CMD"
+    else
+        set -x
+        eval "$DECODE_CMD" \
+            2>&1 | tee /run_logs/slurm_job-${SLURM_JOB_ID}/decode_NODE${NODE_RANK}.log >/dev/null &
+
+        set +x
+        decode_pid=$!
+    fi
+
 
     echo "Waiting for proxy server to be up..."
-    python $SGL_WS_PATH/socket_barrier.py \
+    BARRIER_CMD="python $SGL_WS_PATH/socket_barrier.py \
         --node-ips ${NODE0_ADDR} \
         --node-ports 30000 \
-        --timeout 1800
+        --timeout 1800"
+
+    if [[ "$DRY_RUN" -eq 1 ]]; then
+        echo "DRY RUN: $BARRIER_CMD"
+    else
+        eval "$BARRIER_CMD"
+    fi
+
 
     echo "Waiting until proxy server closes..."
-    python $SGL_WS_PATH/socket_wait.py \
+    WAIT_CMD="python $SGL_WS_PATH/socket_wait.py \
         --remote-ip ${NODE0_ADDR} \
-        --remote-port 30000
+        --remote-port 30000"
+
+    if [[ "$DRY_RUN" -eq 1 ]]; then
+        echo "DRY RUN: $WAIT_CMD"
+    else
+        eval "$WAIT_CMD"
+    fi
 
     echo "Killing the rank $RANK decode server"
-    kill $decode_pid
+    if [[ "$DRY_RUN" -eq 0 ]]; then
+        kill $decode_pid
+    fi
 
 fi
 

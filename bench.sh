@@ -44,31 +44,18 @@ for max_concurrency in ${chosen_concurrencies[@]}; do
     echo "chosen_osl: $chosen_osl"
     echo "export_file: $export_file"
 
-    attempt=1
-    while true; do
-        if run_benchmark_serving \
-            --model  ${MODEL_PATH} \
-            --port ${head_port} \
-            --backend openai \
-            --input-len ${chosen_isl} \
-            --output-len ${chosen_osl} \
-            --random-range-ratio ${random_range_ratio} \
-            --num-prompts $(( $max_concurrency * $num_prompts_multiplier )) \
-            --max-concurrency "$max_concurrency" \
-            --result-filename "$export_file" \
-            --result-dir /workspace/
-           # --use-chat-template
-        then
-            break
-        fi
-        if [ "$attempt" -ge "$max_retries" ]; then
-            echo "ERROR: run_benchmark_serving for concurrency $max_concurrency failed after $max_retries attempts" >&2
-            exit 1
-        fi
-        echo "Attempt $attempt failed, retrying ($((attempt + 1))/$max_retries)..." >&2
-        attempt=$((attempt + 1))
-        sleep 10
-    done
+    run_benchmark_serving \
+        --model  ${MODEL_PATH} \
+        --port ${head_port} \
+        --backend openai \
+        --input-len ${chosen_isl} \
+        --output-len ${chosen_osl} \
+        --random-range-ratio ${random_range_ratio} \
+        --num-prompts $(( $max_concurrency * $num_prompts_multiplier )) \
+        --max-concurrency "$max_concurrency" \
+        --result-filename "$export_file" \
+        --result-dir /workspace/ \
+        $( [ "$IS_MTP" = "true" ] && echo "--use-chat-template" )
 
     echo "-----------------------------------------"
 done

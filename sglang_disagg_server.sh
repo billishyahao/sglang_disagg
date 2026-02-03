@@ -52,7 +52,9 @@ if [[ -n "${MORI_RDMA_TC}" ]]; then
         fi
         echo "Host '$host_name' has been configured with MORI_RDMA_TC=104"
     elif [[ "$MORI_RDMA_TC" -eq 96 ]]; then
-        if [[ "$host_name" != GPU* || "$host_name" != smci355-ccs-aus*]]; then
+        if [[ "$host_name" == GPU* || "$host_name" == smci355-ccs-aus* ]]; then
+            echo "MORI_RDMA_TC compliance check pass.. "
+        else
             echo "ERROR: MORI_RDMA_TC=96 should be applied on Node with prefix 'GPU' or 'smci355-ccs-aus' but Host '$host_name' does not comply "
             exit 1
         fi
@@ -93,18 +95,21 @@ declare -A MODEL_DP_CONFIGS=(
     ["DeepSeek-R1-0528-MXFP4-Preview"]="--moe-a2a-backend mori --enable-dp-attention --moe-dense-tp-size 1 --enable-dp-lm-head"
 )
 
+
 # Prefill-specific configurations
 # Set parameters based on DP enable status
 if [[ "$PREFILL_ENABLE_DP" == "true" ]]; then
     prefill_cuda_graph_bs=($(seq 1 3))
     prefill_max_running_requests=8
+    prefill_chunked_prefill_size=$((SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK * PREFILL_TP_SIZE * xP))
 else
     prefill_cuda_graph_bs=($(seq 1 128))
     prefill_max_running_requests=128
+    prefill_chunked_prefill_size=262144
 fi
 
 declare -A MODEL_PREFILL_CONFIGS=(
-    ["DeepSeek-R1"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size 16384 --cuda-graph-bs ${prefill_cuda_graph_bs[*]} --disable-radix-cache"
+    ["DeepSeek-R1"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size} --cuda-graph-bs ${prefill_cuda_graph_bs[*]} --disable-radix-cache"
     ["DeepSeek-R1-0528-MXFP4-Preview"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size 16384  --cuda-graph-bs ${prefill_cuda_graph_bs[*]} --disable-radix-cache"
 )
 
@@ -113,14 +118,17 @@ declare -A MODEL_PREFILL_CONFIGS=(
 if [[ "$DECODE_ENABLE_DP" == "true" ]]; then
     decode_cuda_graph_bs=($(seq 1 128))
     decode_max_running_requests=8192
+    decode_chunked_prefill_size=$((SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK * DECODE_TP_SIZE * yD))
 else
     decode_cuda_graph_bs=($(seq 1 256))
     decode_max_running_requests=256
+    decode_chunked_prefill_size=262144
 fi
 
+##FIXME(billishyahao): This is only workaround for now. We will eliminate this chunked-prefill-size for decode node in the future
 declare -A MODEL_DECODE_CONFIGS=(
-    ["DeepSeek-R1"]="--mem-fraction-static 0.6 --max-running-requests ${decode_max_running_requests} --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
-    ["DeepSeek-R1-0528-MXFP4-Preview"]="--mem-fraction-static 0.6 --max-running-requests ${decode_max_running_requests} --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
+    ["DeepSeek-R1"]="--mem-fraction-static 0.6 --max-running-requests ${decode_max_running_requests} --chunked-prefill-size ${decode_chunked_prefill_size} --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
+    ["DeepSeek-R1-0528-MXFP4-Preview"]="--mem-fraction-static 0.6 --max-running-requests ${decode_max_running_requests} --chunked-prefill-size ${decode_chunked_prefill_size} --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
 )
 
 

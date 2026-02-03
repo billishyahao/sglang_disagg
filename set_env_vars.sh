@@ -28,6 +28,10 @@ if [[ $NODENAME == GPU* ]]; then
     export IBDEVICES=ionic_0,ionic_1,ionic_2,ionic_3,ionic_4,ionic_5,ionic_6,ionic_7
     export GLOO_SOCKET_IFNAME=$(ip route | grep '^default' | awk '{print $5}')
     export NCCL_SOCKET_IFNAME=$(ip route | grep '^default' | awk '{print $5}')
+elif [[ $NODENAME == smci355-ccs-aus* ]]; then
+    export IBDEVICES=ionic_0,ionic_1,ionic_2,ionic_3,ionic_4,ionic_5,ionic_6,ionic_7
+    export GLOO_SOCKET_IFNAME=$(ip route | grep '^default' | awk '{print $5}')
+    export NCCL_SOCKET_IFNAME=$(ip route | grep '^default' | awk '{print $5}')
 elif [[ $NODENAME == mia1* ]]; then
     export IBDEVICES=rdma0,rdma1,rdma2,rdma3,rdma4,rdma5,rdma6,rdma7
     export GLOO_SOCKET_IFNAME=$(ip route | grep '^default' | awk '{print $5}' | head -n 1)

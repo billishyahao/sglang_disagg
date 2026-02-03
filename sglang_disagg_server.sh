@@ -52,8 +52,8 @@ if [[ -n "${MORI_RDMA_TC}" ]]; then
         fi
         echo "Host '$host_name' has been configured with MORI_RDMA_TC=104"
     elif [[ "$MORI_RDMA_TC" -eq 96 ]]; then
-        if [[ "$host_name" != GPU* ]]; then
-            echo "ERROR: MORI_RDMA_TC=96 should be applied on Node with prefix 'GPU' but Host '$host_name' does not comply "
+        if [[ "$host_name" != GPU* || "$host_name" != smci355-ccs-aus*]]; then
+            echo "ERROR: MORI_RDMA_TC=96 should be applied on Node with prefix 'GPU' or 'smci355-ccs-aus' but Host '$host_name' does not comply "
             exit 1
         fi
         echo "Host '$host_name' has been configured with MORI_RDMA_TC=96"

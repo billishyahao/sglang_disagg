@@ -382,8 +382,10 @@ if [ "$NODE_RANK" -eq 0 ]; then
     fi
 
     # Copy the bench.sh result from tmp folder into shared nfs folder
-    cp -r /run_logs/slurm_job-${SLURM_JOB_ID} /sglang_disagg/logs/
- 
+    if [[ "$DRY_RUN" -eq 0 ]]; then
+        cp -r /run_logs/slurm_job-${SLURM_JOB_ID} /sglang_disagg/logs/
+    fi
+
     echo "Killing the proxy server and prefill server"
 
     if [[ "$DRY_RUN" -eq 0 ]]; then

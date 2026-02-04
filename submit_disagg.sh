@@ -70,10 +70,10 @@ NUM_NODES=$((PREFILL_NODES + DECODE_NODES))
 profiler_args="${ISL} ${OSL} ${CONCURRENCIES} ${REQUEST_RATE}"
 
 # Optional: pass an explicit node list to sbatch.
-# NODE_LIST is expected to be space-separated hostnames.
+# NODE_LIST is expected to be comma-separated hostnames.
 NODELIST_OPT=()
 if [[ -n "${NODE_LIST//[[:space:]]/}" ]]; then
-    read -r -a NODE_ARR <<< "$NODE_LIST"
+    IFS=',' read -r -a NODE_ARR <<< "$NODE_LIST"
     if [[ "${#NODE_ARR[@]}" -ne "$NUM_NODES" ]]; then
         echo "Error: NODE_LIST has ${#NODE_ARR[@]} nodes but NUM_NODES=${NUM_NODES}" >&2
         echo "Error: NODE_LIST='${NODE_LIST}'" >&2

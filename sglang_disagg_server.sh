@@ -340,7 +340,6 @@ if [ "$NODE_RANK" -eq 0 ]; then
 
     ROUTER_CMD="python -m sglang_router.launch_router \
         --pd-disaggregation \
-        --mini-lb \
         --port 30000 \
         ${PREFILL_ARGS} \
         ${DECODE_ARGS}"

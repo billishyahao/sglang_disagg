@@ -63,17 +63,30 @@ PREFILL_ENABLE_DP=${10:-1}
 DECODE_ENABLE_EP=${11:-1}
 DECODE_ENABLE_DP=${12:-1}
 RANDOM_RANGE_RATIO=${13}
+NODE_LIST=${14}
 
 
 NUM_NODES=$((PREFILL_NODES + DECODE_NODES))
 profiler_args="${ISL} ${OSL} ${CONCURRENCIES} ${REQUEST_RATE}"
 
+# Optional: pass an explicit node list to sbatch.
+# NODE_LIST is expected to be space-separated hostnames.
+NODELIST_OPT=()
+if [[ -n "${NODE_LIST//[[:space:]]/}" ]]; then
+    read -r -a NODE_ARR <<< "$NODE_LIST"
+    if [[ "${#NODE_ARR[@]}" -ne "$NUM_NODES" ]]; then
+        echo "Error: NODE_LIST has ${#NODE_ARR[@]} nodes but NUM_NODES=${NUM_NODES}" >&2
+        echo "Error: NODE_LIST='${NODE_LIST}'" >&2
+        exit 1
+    fi
+    NODELIST_CSV="$(IFS=,; echo "${NODE_ARR[*]}")"
+    NODELIST_OPT=(--nodelist "$NODELIST_CSV")
+fi
+
 # Export variables for the SLURM job
 export MODEL_DIR=$MODEL_PATH
 export DOCKER_IMAGE_NAME=$CONTAINER_IMAGE
 export PROFILER_ARGS=$profiler_args
-
-
 
 export xP=$PREFILL_WORKERS
 export yD=$DECODE_WORKERS
@@ -99,9 +112,9 @@ sbatch_cmd=(
     --parsable
     -N "$NUM_NODES"
     -n "$NUM_NODES"
+    "${NODELIST_OPT[@]}"
     --time "$TIME_LIMIT"
     --partition "$SLURM_PARTITION"
-    --nodelist smci355-ccs-aus-n06-21,smci355-ccs-aus-n08-[29,33]
     --account "$SLURM_ACCOUNT"
     --exclude smci355-ccs-aus-n08-[21,25],smci355-ccs-aus-n09-21
     --job-name "$RUNNER_NAME"

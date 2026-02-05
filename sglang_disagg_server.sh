@@ -105,7 +105,7 @@ declare -A MODEL_DP_CONFIGS=(
 if [[ "$PREFILL_ENABLE_DP" == "true" ]]; then
     prefill_cuda_graph_bs=($(seq 1 3))
     prefill_max_running_requests=8
-    prefill_chunked_prefill_size=$((SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK * PREFILL_TP_SIZE * xP))
+    prefill_chunked_prefill_size=$((SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK * PREFILL_TP_SIZE))
 else
     prefill_cuda_graph_bs=($(seq 1 128))
     prefill_max_running_requests=128
@@ -122,7 +122,7 @@ declare -A MODEL_PREFILL_CONFIGS=(
 if [[ "$DECODE_ENABLE_DP" == "true" ]]; then
     decode_cuda_graph_bs=($(seq 1 128))
     decode_max_running_requests=8192
-    decode_chunked_prefill_size=$((SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK * DECODE_TP_SIZE * yD))
+    decode_chunked_prefill_size=$((SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK * DECODE_TP_SIZE))
 else
     decode_cuda_graph_bs=($(seq 1 256))
     decode_max_running_requests=256

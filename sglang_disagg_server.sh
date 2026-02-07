@@ -120,7 +120,7 @@ declare -A MODEL_PREFILL_CONFIGS=(
 # Decode-specific configurations
 # Set parameters based on DP enable status
 if [[ "$DECODE_ENABLE_DP" == "true" ]]; then
-    decode_cuda_graph_bs=($(seq 1 128))
+    decode_cuda_graph_bs=($(seq 1 160))
     decode_max_running_requests=8192
     decode_chunked_prefill_size=$((SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK * DECODE_TP_SIZE))
 else

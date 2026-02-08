@@ -351,8 +351,28 @@ if [ "$NODE_RANK" -eq 0 ]; then
         set -x
         eval "$ROUTER_CMD" \
             2>&1 | tee /run_logs/slurm_job-${SLURM_JOB_ID}/proxy_NODE${NODE_RANK}.log >/dev/null &
-        set +x
         proxy_pid=$!
+        
+        host="127.0.0.1"
+        port="30000"
+
+        # 1) Wait for HTTP /readiness 200
+        for i in {1..120}; do
+        code=$(curl -fsS -o /dev/null -w '%{http_code}' http://$host:$port/readiness || true)
+        [ "$code" = "200" ] && break
+        sleep 2
+        done
+        [ "$code" = "200" ] || { echo "router readiness never returned 200"; exit 1; }
+
+        # 2) Functional ping (OpenAI-compatible)
+        # code=$(curl -fsS -o /dev/null -w '%{http_code}' \
+        # -H 'Content-Type: application/json' \
+        # -X POST http://$host:$port/v1/completions \
+        # -d '{"model":"test","prompt":"ping","max_tokens":1,"temperature":0}' || true)
+        # [ "$code" = "200" ] || { echo "functional probe failed"; exit 2; }
+        
+        set +x
+        echo "Router is ready for benchmarking"
     fi
     
 

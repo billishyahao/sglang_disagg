@@ -134,11 +134,13 @@ else
     decode_chunked_prefill_size=262144
 fi
 
+# For EP16 only
+decode_max_dispatch_tokens_per_rank=${SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK}
 if [[ "$DECODE_ENABLE_DP" == "true" ]] && [[ "$DECODE_ENABLE_EP" == "true" ]] && [[ "$DECODE_TP_SIZE" -eq 16 ]]; then
     decode_cuda_graph_bs=($(seq 1 128))
     decode_max_running_requests=2048
-    export SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK=256
-    decode_chunked_prefill_size=$((SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK * DECODE_TP_SIZE))
+    decode_max_dispatch_tokens_per_rank=256
+    decode_chunked_prefill_size=$((decode_max_dispatch_tokens_per_rank * DECODE_TP_SIZE))
 fi
 
 ##FIXME(billishyahao): This is only workaround for now. We will eliminate this chunked-prefill-size for decode node in the future
@@ -489,8 +491,9 @@ else
     echo "Using decode config: $DECODE_MODEL_CONFIG"
     echo "Decode node rank: $RANK"
     echo "Decode parallelism: TP=${DECODE_TP_SIZE}, EP enabled: ${DECODE_ENABLE_EP}, DP enabled: ${DECODE_ENABLE_DP}"
-    
-    DECODE_CMD="python3 -m sglang.launch_server \
+    echo "Decode env: SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK=${decode_max_dispatch_tokens_per_rank}"
+
+    DECODE_CMD="SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK=${decode_max_dispatch_tokens_per_rank} python3 -m sglang.launch_server \
         --model-path ${MODEL_DIR}/${MODEL_NAME} \
         --disaggregation-mode decode \
         --disaggregation-ib-device ${IBDEVICES} \

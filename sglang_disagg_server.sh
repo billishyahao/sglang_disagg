@@ -104,7 +104,7 @@ declare -A MODEL_DP_CONFIGS=(
 # Set parameters based on DP enable status
 if [[ "$PREFILL_ENABLE_DP" == "true" ]]; then
     prefill_cuda_graph_bs=($(seq 1 3))
-    prefill_max_running_requests=8
+    prefill_max_running_requests=10
     prefill_chunked_prefill_size=$((SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK * PREFILL_TP_SIZE))
 else
     prefill_cuda_graph_bs=($(seq 1 128))

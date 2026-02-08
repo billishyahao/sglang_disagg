@@ -112,6 +112,11 @@ else
     prefill_chunked_prefill_size=262144
 fi
 
+# For EP16 only
+if [[ "$PREFILL_ENABLE_DP" == "true" ]] && [[ "$PREFILL_ENABLE_EP" == "true" ]] && [[ "$DECODE_TP_SIZE" -eq 16 ]]; then
+    prefill_max_running_requests=24
+fi
+
 declare -A MODEL_PREFILL_CONFIGS=(
     ["DeepSeek-R1"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size} --cuda-graph-bs ${prefill_cuda_graph_bs[*]} --disable-radix-cache"
     ["DeepSeek-R1-0528-MXFP4-Preview"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size 16384  --cuda-graph-bs ${prefill_cuda_graph_bs[*]} --disable-radix-cache"
@@ -127,6 +132,13 @@ else
     decode_cuda_graph_bs=($(seq 1 256))
     decode_max_running_requests=256
     decode_chunked_prefill_size=262144
+fi
+
+if [[ "$DECODE_ENABLE_DP" == "true" ]] && [[ "$DECODE_ENABLE_EP" == "true" ]] && [[ "$DECODE_TP_SIZE" -eq 16 ]]; then
+    decode_cuda_graph_bs=($(seq 1 128))
+    decode_max_running_requests=2048
+    export SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK=256
+    decode_chunked_prefill_size=$((SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK * DECODE_TP_SIZE))
 fi
 
 ##FIXME(billishyahao): This is only workaround for now. We will eliminate this chunked-prefill-size for decode node in the future

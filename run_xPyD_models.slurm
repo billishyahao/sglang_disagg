@@ -342,6 +342,17 @@ exec sudo docker run --rm \
     --device /dev/dri \
     --device /dev/kfd \
     --device /dev/infiniband \
+    --device=/dev/infiniband/rdma_cm \
+    --device=/dev/infiniband/uverbs0 \
+    --device=/dev/infiniband/uverbs1 \
+    --device=/dev/infiniband/uverbs2 \
+    --device=/dev/infiniband/uverbs3 \
+    --device=/dev/infiniband/uverbs4 \
+    --device=/dev/infiniband/uverbs5 \
+    --device=/dev/infiniband/uverbs6 \
+    --device=/dev/infiniband/uverbs7 \
+    --ulimit memlock=-1 \
+    --ulimit stack=67108864 \
     --network host \
     --ipc host \
     --group-add video \

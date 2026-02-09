@@ -87,11 +87,12 @@ declare -A MODEL_BASE_CONFIGS=(
 
 
 # MTP configurations (only when DECODE_MTP_SIZE is set and greater than zero)
-declare -A MODEL_MTP_CONFIGS=(
-    ["DeepSeek-R1"]="--speculative-algorithm NEXTN --speculative-num-steps 1 --speculative-eagle-topk 1 --speculative-num-draft-tokens ${DECODE_MTP_SIZE}"
-    ["DeepSeek-R1-0528-MXFP4-Preview"]="--speculative-algorithm NEXTN --speculative-num-steps 1 --speculative-eagle-topk 1 --speculative-num-draft-tokens ${DECODE_MTP_SIZE}"
-)
-
+if [[ "$DECODE_MTP_SIZE" =~ ^[0-9]+$ ]] && [[ "$DECODE_MTP_SIZE" -gt 0 ]]; then
+    declare -A MODEL_MTP_CONFIGS=(
+        ["DeepSeek-R1"]="--speculative-algorithm NEXTN --speculative-num-steps ${DECODE_MTP_SIZE} --speculative-eagle-topk 1 --speculative-num-draft-tokens $((DECODE_MTP_SIZE + 1))"
+        ["DeepSeek-R1-0528-MXFP4-Preview"]="--speculative-algorithm NEXTN --speculative-num-steps ${DECODE_MTP_SIZE} --speculative-eagle-topk 1 --speculative-num-draft-tokens $((DECODE_MTP_SIZE + 1))"
+    )
+fi
 
 # DP-specific common configurations (only when DP is enabled)
 declare -A MODEL_DP_CONFIGS=(
@@ -372,19 +373,17 @@ if [ "$NODE_RANK" -eq 0 ]; then
 
         # 1) Wait for HTTP /readiness 200
         for i in {1..120}; do
-        code=$(curl -fsS -o /dev/null -w '%{http_code}' http://$host:$port/readiness || true)
-        [ "$code" = "200" ] && break
-        sleep 2
+            # code=$(curl -fsS -o /dev/null -w '%{http_code}' http://$host:$port/readiness || true)
+            readiness_body_file=$(mktemp)
+            code=$(curl -fsS -o "$readiness_body_file" -w '%{http_code}' http://$host:$port/readiness || true)
+            readiness_json=$(cat "$readiness_body_file")
+            rm -f "$readiness_body_file"
+            echo "Readiness JSON: $readiness_json"
+            [ "$code" = "200" ] && break
+            sleep 2
         done
         [ "$code" = "200" ] || { echo "router readiness never returned 200"; exit 1; }
 
-        # 2) Functional ping (OpenAI-compatible)
-        # code=$(curl -fsS -o /dev/null -w '%{http_code}' \
-        # -H 'Content-Type: application/json' \
-        # -X POST http://$host:$port/v1/completions \
-        # -d '{"model":"test","prompt":"ping","max_tokens":1,"temperature":0}' || true)
-        # [ "$code" = "200" ] || { echo "functional probe failed"; exit 2; }
-        
         set +x
         echo "Router is ready for benchmarking"
     fi

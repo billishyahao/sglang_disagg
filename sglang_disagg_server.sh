@@ -376,10 +376,12 @@ if [ "$NODE_RANK" -eq 0 ]; then
             # code=$(curl -fsS -o /dev/null -w '%{http_code}' http://$host:$port/readiness || true)
             readiness_body_file=$(mktemp)
             code=$(curl -fsS -o "$readiness_body_file" -w '%{http_code}' http://$host:$port/readiness || true)
-            readiness_json=$(cat "$readiness_body_file")
+            if [ "$code" = "200" ]; then
+                readiness_json=$(cat "$readiness_body_file")
+                echo "Readiness JSON: $readiness_json"
+                break
+            fi
             rm -f "$readiness_body_file"
-            echo "Readiness JSON: $readiness_json"
-            [ "$code" = "200" ] && break
             sleep 2
         done
         [ "$code" = "200" ] || { echo "router readiness never returned 200"; exit 1; }
@@ -400,6 +402,8 @@ if [ "$NODE_RANK" -eq 0 ]; then
     else
         export IS_MTP=false
     fi
+
+    sleep 1000000000000000000
 
     # n_prefill n_decode prefill_gpus decode_gpus model_dir model_name log_path isl osl concurrency_list req_rate random_range_ratio num_prompts_multiplier
     BENCH_CMD="bash /sglang_disagg/bench.sh ${xP} ${yD} $((PREFILL_TP_SIZE*xP)) $((DECODE_TP_SIZE*yD)) \

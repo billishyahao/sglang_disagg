@@ -103,10 +103,15 @@ declare -A MODEL_DP_CONFIGS=(
 
 # Prefill-specific configurations
 # Set parameters based on DP enable status
+prefill_max_dispatch_tokens_per_rank=${SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK}
+# for DEP8
+if [[ "$PREFILL_ENABLE_DP" == "true" ]] && [[ "$PREFILL_ENABLE_EP" == "true" ]] && [[ "$DECODE_TP_SIZE" -eq 8 ]]; then
+    prefill_max_dispatch_tokens_per_rank=2048
+fi
 if [[ "$PREFILL_ENABLE_DP" == "true" ]]; then
     prefill_cuda_graph_bs=($(seq 1 3))
     prefill_max_running_requests=10
-    prefill_chunked_prefill_size=$((SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK * PREFILL_TP_SIZE))
+    prefill_chunked_prefill_size=$((prefill_max_dispatch_tokens_per_rank * PREFILL_TP_SIZE))
 else
     prefill_cuda_graph_bs=($(seq 1 128))
     prefill_max_running_requests=128
@@ -132,15 +137,18 @@ if [[ "$DECODE_ENABLE_DP" == "true" ]]; then
 else
     decode_cuda_graph_bs=($(seq 1 256))
     decode_max_running_requests=256
-    decode_chunked_prefill_size=262144
 fi
 
-# For EP16 only
+# For EP16 and DEP8
 decode_max_dispatch_tokens_per_rank=${SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK}
-if [[ "$DECODE_ENABLE_DP" == "true" ]] && [[ "$DECODE_ENABLE_EP" == "true" ]] && [[ "$DECODE_TP_SIZE" -eq 16 ]]; then
-    decode_cuda_graph_bs=($(seq 1 128))
-    decode_max_running_requests=2048
-    decode_max_dispatch_tokens_per_rank=256
+if [[ "$DECODE_ENABLE_DP" == "true" ]] && [[ "$DECODE_ENABLE_EP" == "true" ]]; then
+    if [[ "$DECODE_TP_SIZE" -eq 16 ]]; then # DEP16
+        decode_max_dispatch_tokens_per_rank=256
+        decode_max_running_requests=2048
+        decode_cuda_graph_bs=($(seq 1 128))
+    else # DEP8
+        decode_max_dispatch_tokens_per_rank=2048
+    fi
     decode_chunked_prefill_size=$((decode_max_dispatch_tokens_per_rank * DECODE_TP_SIZE))
 fi
 

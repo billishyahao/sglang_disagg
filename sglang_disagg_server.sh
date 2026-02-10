@@ -45,7 +45,7 @@ source $SGL_WS_PATH/set_env_vars.sh
 host_ip=$(ip route get 1.1.1.1 | awk '/src/ {print $7}')
 host_name=$(hostname)
 
-Validate MORI_RDMA_TC and hostname consistency
+# Validate MORI_RDMA_TC and hostname consistency
 if [[ -n "${MORI_RDMA_TC}" ]]; then
     echo "MORI_RDMA_TC is set to: $MORI_RDMA_TC"
 

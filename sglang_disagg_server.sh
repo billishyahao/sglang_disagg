@@ -34,7 +34,7 @@ BENCH_NUM_PROMPTS_MULTIPLIER="${BENCH_NUM_PROMPTS_MULTIPLIER:-10}"
 BENCH_MAX_CONCURRENCY="${BENCH_MAX_CONCURRENCY:-512}"
 
 # Dry Run for debugging purpose
-DRY_RUN="${DRY_RUN:-0}"
+DRY_RUN="${DRY_RUN:-1}"
 
 
 # =============================================================================
@@ -45,40 +45,38 @@ source $SGL_WS_PATH/set_env_vars.sh
 host_ip=$(ip route get 1.1.1.1 | awk '/src/ {print $7}')
 host_name=$(hostname)
 
-# Validate MORI_RDMA_TC and hostname consistency
-# if [[ -n "${MORI_RDMA_TC}" ]]; then
-#     echo "MORI_RDMA_TC is set to: $MORI_RDMA_TC"
+Validate MORI_RDMA_TC and hostname consistency
+if [[ -n "${MORI_RDMA_TC}" ]]; then
+    echo "MORI_RDMA_TC is set to: $MORI_RDMA_TC"
 
-#     if [[ "$MORI_RDMA_TC" -eq 104 ]]; then
-#         if [[ "$host_name" != mia1* ]]; then
-#             echo "ERROR: MORI_RDMA_TC=104 should be applied on Node with prefix 'mia' but Host '$host_name' does not comply "
-#             exit 1
-#         fi
-#         echo "Host '$host_name' has been configured with MORI_RDMA_TC=104"
-#     elif [[ "$MORI_RDMA_TC" -eq 96 ]]; then
-#         if [[ "$host_name" == GPU* || "$host_name" == smci355-ccs-aus* ]]; then
-#             echo "MORI_RDMA_TC compliance check pass.. "
-#         else
-#             echo "ERROR: MORI_RDMA_TC=96 should be applied on Node with prefix 'GPU' or 'smci355-ccs-aus' but Host '$host_name' does not comply "
-#             exit 1
-#         fi
-#         echo "Host '$host_name' has been configured with MORI_RDMA_TC=96"
-#     else
-#         echo "ERROR: MORI_RDMA_TC=$MORI_RDMA_TC should be either 104 or 96. Please apply the recommended QoS/DSCP configs."
-#         exit 1
-#     fi
-# else
-#     echo "ERROR: MORI_RDMA_TC is not set. "
-#     exit 1
-# fi
+    if [[ "$MORI_RDMA_TC" -eq 104 ]]; then
+        if [[ "$host_name" != mia1* ]]; then
+            echo "ERROR: MORI_RDMA_TC=104 should be applied on Node with prefix 'mia' but Host '$host_name' does not comply "
+            exit 1
+        fi
+        echo "Host '$host_name' has been configured with MORI_RDMA_TC=104"
+    elif [[ "$MORI_RDMA_TC" -eq 96 ]]; then
+        if [[ "$host_name" == GPU* || "$host_name" == smci355-ccs-aus* ]]; then
+            echo "MORI_RDMA_TC compliance check pass.. "
+        else
+            echo "ERROR: MORI_RDMA_TC=96 should be applied on Node with prefix 'GPU' or 'smci355-ccs-aus' but Host '$host_name' does not comply "
+            exit 1
+        fi
+        echo "Host '$host_name' has been configured with MORI_RDMA_TC=96"
+    else
+        echo "ERROR: MORI_RDMA_TC=$MORI_RDMA_TC should be either 104 or 96. Please apply the recommended QoS/DSCP configs."
+        exit 1
+    fi
+else
+    echo "ERROR: MORI_RDMA_TC is not set. "
+    exit 1
+fi
 
 # =============================================================================
 # Model-Specific Configuration Maps
 # =============================================================================
 
 # Common configurations shared by both prefill and decode (base)
-
-
 
 declare -A MODEL_BASE_CONFIGS=(
     ["DeepSeek-V3"]="--decode-log-interval 1 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
@@ -109,24 +107,14 @@ declare -A MODEL_DP_CONFIGS=(
 
 # Prefill-specific configurations
 # Set parameters based on DP enable status
-prefill_max_dispatch_tokens_per_rank=${SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK}
-# for DEP8
-if [[ "$PREFILL_ENABLE_DP" == "true" ]] && [[ "$PREFILL_ENABLE_EP" == "true" ]] && [[ "$DECODE_TP_SIZE" -eq 8 ]]; then
-    prefill_max_dispatch_tokens_per_rank=2048
-fi
 if [[ "$PREFILL_ENABLE_DP" == "true" ]]; then
     prefill_cuda_graph_bs=($(seq 1 3))
-    prefill_max_running_requests=10
-    prefill_chunked_prefill_size=$((prefill_max_dispatch_tokens_per_rank * PREFILL_TP_SIZE))
+    prefill_max_running_requests=24
+    prefill_chunked_prefill_size=$((MORI_MAX_DISPATCH_TOKENS_PREFILL * PREFILL_TP_SIZE))
 else
     prefill_cuda_graph_bs=($(seq 1 128))
     prefill_max_running_requests=128
     prefill_chunked_prefill_size=262144
-fi
-
-# For EP16 only
-if [[ "$PREFILL_ENABLE_DP" == "true" ]] && [[ "$PREFILL_ENABLE_EP" == "true" ]] && [[ "$DECODE_TP_SIZE" -eq 16 ]]; then
-    prefill_max_running_requests=24
 fi
 
 declare -A MODEL_PREFILL_CONFIGS=(
@@ -141,31 +129,20 @@ declare -A MODEL_PREFILL_CONFIGS=(
 if [[ "$DECODE_ENABLE_DP" == "true" ]]; then
     decode_cuda_graph_bs=($(seq 1 160))
     decode_max_running_requests=8192
-    decode_chunked_prefill_size=$((SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK * DECODE_TP_SIZE))
+    decode_chunked_prefill_size=$((MORI_MAX_DISPATCH_TOKENS_DECODE * DECODE_TP_SIZE))
 else
     decode_cuda_graph_bs=($(seq 1 256))
     decode_max_running_requests=256
+    decode_chunked_prefill_size=262144
 fi
 
-# For EP16 and DEP8
-decode_max_dispatch_tokens_per_rank=${SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK}
-if [[ "$DECODE_ENABLE_DP" == "true" ]] && [[ "$DECODE_ENABLE_EP" == "true" ]]; then
-    if [[ "$DECODE_TP_SIZE" -eq 16 ]]; then # DEP16
-        decode_max_dispatch_tokens_per_rank=256
-        decode_max_running_requests=2048
-        decode_cuda_graph_bs=($(seq 1 128))
-    else # DEP8
-        decode_max_dispatch_tokens_per_rank=2048
-    fi
-    decode_chunked_prefill_size=$((decode_max_dispatch_tokens_per_rank * DECODE_TP_SIZE))
-fi
 
 ##FIXME(billishyahao): This is only workaround for now. We will eliminate this chunked-prefill-size for decode node in the future
 declare -A MODEL_DECODE_CONFIGS=(
-    ["DeepSeek-V3"]="--mem-fraction-static 0.6 --max-running-requests ${decode_max_running_requests} --chunked-prefill-size ${decode_chunked_prefill_size} --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
-    ["DeepSeek-V3-0324"]="--mem-fraction-static 0.6 --max-running-requests ${decode_max_running_requests} --chunked-prefill-size ${decode_chunked_prefill_size} --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
-    ["DeepSeek-R1"]="--mem-fraction-static 0.6 --max-running-requests ${decode_max_running_requests} --chunked-prefill-size ${decode_chunked_prefill_size} --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
-    ["DeepSeek-R1-0528-MXFP4-Preview"]="--mem-fraction-static 0.6 --max-running-requests ${decode_max_running_requests} --chunked-prefill-size ${decode_chunked_prefill_size} --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
+    ["DeepSeek-V3"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests} --chunked-prefill-size ${decode_chunked_prefill_size} --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
+    ["DeepSeek-V3-0324"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests} --chunked-prefill-size ${decode_chunked_prefill_size} --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
+    ["DeepSeek-R1"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests} --chunked-prefill-size ${decode_chunked_prefill_size} --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
+    ["DeepSeek-R1-0528-MXFP4-Preview"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests} --chunked-prefill-size ${decode_chunked_prefill_size} --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
 )
 
 
@@ -328,10 +305,12 @@ if [ "$NODE_RANK" -eq 0 ]; then
     echo "Decode  parallelism: TP=${DECODE_TP_SIZE},  EP enabled: ${DECODE_ENABLE_EP},  DP enabled: ${DECODE_ENABLE_DP},  MTP size=${DECODE_MTP_SIZE}"
     echo "Prefill servers ($((PREFILL_TP_SIZE/8)) nodes): ${PREFILL_ARGS}"
     echo "Decode servers  ($((DECODE_TP_SIZE/8))  nodes): ${DECODE_ARGS}"
+    echo "Prefill env: SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK: ${MORI_MAX_DISPATCH_TOKENS_PREFILL}"
+    echo "Decode env: SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK=${MORI_MAX_DISPATCH_TOKENS_DECODE}"
     echo "================================================"
     
     # start the head prefill server
-    PREFILL_CMD="SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK=${prefill_max_dispatch_tokens_per_rank} python3 -m sglang.launch_server \
+    PREFILL_CMD="SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK=${MORI_MAX_DISPATCH_TOKENS_PREFILL} python3 -m sglang.launch_server \
         --model-path $MODEL_DIR/$MODEL_NAME \
         --disaggregation-mode prefill \
         --disaggregation-ib-device ${IBDEVICES} \
@@ -460,7 +439,8 @@ elif [ "$NODE_RANK" -gt 0 ] && [ "$NODE_RANK" -lt "$NODE_OFFSET" ]; then
     echo "Using prefill config: $PREFILL_MODEL_CONFIG"
     echo "Prefill parallelism: TP=${PREFILL_TP_SIZE}, EP enabled: ${PREFILL_ENABLE_EP}, DP enabled: ${PREFILL_ENABLE_DP}"
 
-    PREFILL_CMD="SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK=${prefill_max_dispatch_tokens_per_rank} python3 -m sglang.launch_server \
+
+    PREFILL_CMD="SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK=${MORI_MAX_DISPATCH_TOKENS_PREFILL} python3 -m sglang.launch_server \
         --model-path $MODEL_DIR/${MODEL_NAME} \
         --disaggregation-mode prefill \
         --disaggregation-ib-device ${IBDEVICES} \
@@ -520,9 +500,8 @@ else
     echo "Using decode config: $DECODE_MODEL_CONFIG"
     echo "Decode node rank: $RANK"
     echo "Decode parallelism: TP=${DECODE_TP_SIZE}, EP enabled: ${DECODE_ENABLE_EP}, DP enabled: ${DECODE_ENABLE_DP}"
-    echo "Decode env: SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK=${decode_max_dispatch_tokens_per_rank}"
 
-    DECODE_CMD="SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK=${decode_max_dispatch_tokens_per_rank} python3 -m sglang.launch_server \
+    DECODE_CMD="SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK=${MORI_MAX_DISPATCH_TOKENS_DECODE} python3 -m sglang.launch_server \
         --model-path ${MODEL_DIR}/${MODEL_NAME} \
         --disaggregation-mode decode \
         --disaggregation-ib-device ${IBDEVICES} \

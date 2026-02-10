@@ -31,7 +31,7 @@ export DECODE_NODES=2
 export DECODE_WORKERS=2
 export ISL=1024
 export OSL=1024
-export CONCURRENCIES="256 512"
+export CONCURRENCIES=256
 export REQUEST_RATE="inf"
 export PREFILL_ENABLE_EP=true
 export PREFILL_ENABLE_DP=true
@@ -44,10 +44,10 @@ export NODE_LIST="smci355-ccs-aus-n09-25,smci355-ccs-aus-n09-29,smci355-ccs-aus-
 
 JOB_ID=$(bash submit_disagg.sh \
     $PREFILL_NODES $PREFILL_WORKERS $DECODE_NODES $DECODE_WORKERS \
-    $ISL $OSL "$CONCURRENCIES" $REQUEST_RATE \
+    $ISL $OSL $CONCURRENCIES $REQUEST_RATE \
     $PREFILL_ENABLE_EP $PREFILL_ENABLE_DP \
     $DECODE_ENABLE_EP $DECODE_ENABLE_DP \
-    "$BENCH_RANDOM_RANGE_RATIO" "$NODE_LIST")
+    $BENCH_RANDOM_RANGE_RATIO $NODE_LIST)
 
 if [[ $? -ne 0 ]]; then
     echo "Failed to submit job" >&2

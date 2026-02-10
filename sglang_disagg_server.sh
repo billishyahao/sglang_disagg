@@ -81,17 +81,18 @@ fi
 
 
 declare -A MODEL_BASE_CONFIGS=(
-    ["DeepSeek-R1"]="--decode-log-interval 1 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter"
+    ["DeepSeek-R1"]="--decode-log-interval 1 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
     ["DeepSeek-R1-0528-MXFP4-Preview"]="--decode-log-interval 1 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter"
 )
 
 
 # MTP configurations (only when DECODE_MTP_SIZE is set and greater than zero)
-declare -A MODEL_MTP_CONFIGS=(
-    ["DeepSeek-R1"]="--speculative-algorithm NEXTN --speculative-num-steps 1 --speculative-eagle-topk 1 --speculative-num-draft-tokens ${DECODE_MTP_SIZE}"
-    ["DeepSeek-R1-0528-MXFP4-Preview"]="--speculative-algorithm NEXTN --speculative-num-steps 1 --speculative-eagle-topk 1 --speculative-num-draft-tokens ${DECODE_MTP_SIZE}"
-)
-
+if [[ "$DECODE_MTP_SIZE" =~ ^[0-9]+$ ]] && [[ "$DECODE_MTP_SIZE" -gt 0 ]]; then
+    declare -A MODEL_MTP_CONFIGS=(
+        ["DeepSeek-R1"]="--speculative-algorithm NEXTN --speculative-num-steps ${DECODE_MTP_SIZE} --speculative-eagle-topk 1 --speculative-num-draft-tokens $((DECODE_MTP_SIZE + 1))"
+        ["DeepSeek-R1-0528-MXFP4-Preview"]="--speculative-algorithm NEXTN --speculative-num-steps ${DECODE_MTP_SIZE} --speculative-eagle-topk 1 --speculative-num-draft-tokens $((DECODE_MTP_SIZE + 1))"
+    )
+fi
 
 # DP-specific common configurations (only when DP is enabled)
 declare -A MODEL_DP_CONFIGS=(
@@ -104,12 +105,17 @@ declare -A MODEL_DP_CONFIGS=(
 # Set parameters based on DP enable status
 if [[ "$PREFILL_ENABLE_DP" == "true" ]]; then
     prefill_cuda_graph_bs=($(seq 1 3))
-    prefill_max_running_requests=8
+    prefill_max_running_requests=10
     prefill_chunked_prefill_size=$((SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK * PREFILL_TP_SIZE))
 else
     prefill_cuda_graph_bs=($(seq 1 128))
     prefill_max_running_requests=128
     prefill_chunked_prefill_size=262144
+fi
+
+# For EP16 only
+if [[ "$PREFILL_ENABLE_DP" == "true" ]] && [[ "$PREFILL_ENABLE_EP" == "true" ]] && [[ "$DECODE_TP_SIZE" -eq 16 ]]; then
+    prefill_max_running_requests=24
 fi
 
 declare -A MODEL_PREFILL_CONFIGS=(
@@ -120,13 +126,22 @@ declare -A MODEL_PREFILL_CONFIGS=(
 # Decode-specific configurations
 # Set parameters based on DP enable status
 if [[ "$DECODE_ENABLE_DP" == "true" ]]; then
-    decode_cuda_graph_bs=($(seq 1 128))
+    decode_cuda_graph_bs=($(seq 1 160))
     decode_max_running_requests=8192
     decode_chunked_prefill_size=$((SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK * DECODE_TP_SIZE))
 else
     decode_cuda_graph_bs=($(seq 1 256))
     decode_max_running_requests=256
     decode_chunked_prefill_size=262144
+fi
+
+# For EP16 only
+decode_max_dispatch_tokens_per_rank=${SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK}
+if [[ "$DECODE_ENABLE_DP" == "true" ]] && [[ "$DECODE_ENABLE_EP" == "true" ]] && [[ "$DECODE_TP_SIZE" -eq 16 ]]; then
+    decode_cuda_graph_bs=($(seq 1 128))
+    decode_max_running_requests=2048
+    decode_max_dispatch_tokens_per_rank=256
+    decode_chunked_prefill_size=$((decode_max_dispatch_tokens_per_rank * DECODE_TP_SIZE))
 fi
 
 ##FIXME(billishyahao): This is only workaround for now. We will eliminate this chunked-prefill-size for decode node in the future
@@ -351,8 +366,28 @@ if [ "$NODE_RANK" -eq 0 ]; then
         set -x
         eval "$ROUTER_CMD" \
             2>&1 | tee /run_logs/slurm_job-${SLURM_JOB_ID}/proxy_NODE${NODE_RANK}.log >/dev/null &
-        set +x
         proxy_pid=$!
+        
+        host="127.0.0.1"
+        port="30000"
+
+        # 1) Wait for HTTP /readiness 200
+        for i in {1..120}; do
+            # code=$(curl -fsS -o /dev/null -w '%{http_code}' http://$host:$port/readiness || true)
+            readiness_body_file=$(mktemp)
+            code=$(curl -fsS -o "$readiness_body_file" -w '%{http_code}' http://$host:$port/readiness || true)
+            if [ "$code" = "200" ]; then
+                readiness_json=$(cat "$readiness_body_file")
+                echo "Readiness JSON: $readiness_json"
+                break
+            fi
+            rm -f "$readiness_body_file"
+            sleep 2
+        done
+        [ "$code" = "200" ] || { echo "router readiness never returned 200"; exit 1; }
+
+        set +x
+        echo "Router is ready for benchmarking"
     fi
     
 
@@ -464,8 +499,9 @@ else
     echo "Using decode config: $DECODE_MODEL_CONFIG"
     echo "Decode node rank: $RANK"
     echo "Decode parallelism: TP=${DECODE_TP_SIZE}, EP enabled: ${DECODE_ENABLE_EP}, DP enabled: ${DECODE_ENABLE_DP}"
-    
-    DECODE_CMD="python3 -m sglang.launch_server \
+    echo "Decode env: SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK=${decode_max_dispatch_tokens_per_rank}"
+
+    DECODE_CMD="SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK=${decode_max_dispatch_tokens_per_rank} python3 -m sglang.launch_server \
         --model-path ${MODEL_DIR}/${MODEL_NAME} \
         --disaggregation-mode decode \
         --disaggregation-ib-device ${IBDEVICES} \

@@ -15,6 +15,7 @@ concurrency_list=${10:-"512x1"}
 chosen_req_rate=${11:-1}
 random_range_ratio=${12:-0.8}
 num_prompts_multiplier=${13:-10}
+max_retries=3
 
 IFS='x' read -r -a chosen_concurrencies <<< "$concurrency_list"
 
@@ -53,8 +54,9 @@ for max_concurrency in ${chosen_concurrencies[@]}; do
         --num-prompts $(( $max_concurrency * $num_prompts_multiplier )) \
         --max-concurrency "$max_concurrency" \
         --result-filename "$export_file" \
-        --result-dir /workspace/ \
-        $( [ "$IS_MTP" = "true" ] && echo "--use-chat-template" )
+        --result-dir /workspace/
+        # $( [ "$IS_MTP" = "true" ] && echo "--use-chat-template" )
 
     echo "-----------------------------------------"
+    sleep 5
 done

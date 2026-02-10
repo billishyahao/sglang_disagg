@@ -34,7 +34,7 @@ BENCH_NUM_PROMPTS_MULTIPLIER="${BENCH_NUM_PROMPTS_MULTIPLIER:-10}"
 BENCH_MAX_CONCURRENCY="${BENCH_MAX_CONCURRENCY:-512}"
 
 # Dry Run for debugging purpose
-DRY_RUN="${DRY_RUN:-1}"
+DRY_RUN="${DRY_RUN:-0}"
 
 
 # =============================================================================

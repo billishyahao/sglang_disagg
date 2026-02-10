@@ -374,6 +374,9 @@ if [ "$NODE_RANK" -eq 0 ]; then
     ROUTER_CMD="python -m sglang_router.launch_router \
         --pd-disaggregation \
         --port 30000 \
+        --policy random \
+        --prefill-policy random \
+        --decode-policy random  \
         ${PREFILL_ARGS} \
         ${DECODE_ARGS}"
 

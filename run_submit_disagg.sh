@@ -19,31 +19,33 @@
 
 set -x
 
-export SLURM_ACCOUNT="amd"
-export SLURM_PARTITION="compute"
+export SLURM_ACCOUNT="thshan"
+export SLURM_PARTITION="Compute-Group01"
 export TIME_LIMIT="24:00:00"
-export MODEL_PATH="/nfsdata"
+export MODEL_PATH="/apps/data/models"
 export MODEL_NAME="DeepSeek-R1"
-export CONTAINER_IMAGE="rocm/pytorch-private:sglang-0.5.6.post1-rocm700-mi35x-mori-0113"
+export CONTAINER_IMAGE="rocm/pytorch-private:sglang-0.5.8-rocm700-mi35x-mori-0208-tuned"
 export PREFILL_NODES=1
 export PREFILL_WORKERS=1
 export DECODE_NODES=2
-export DECODE_WORKERS=1
+export DECODE_WORKERS=2
 export ISL=1024
 export OSL=1024
-export CONCURRENCIES="2048"
+export CONCURRENCIES="256 512"
 export REQUEST_RATE="inf"
 export PREFILL_ENABLE_EP=true
 export PREFILL_ENABLE_DP=true
 export DECODE_ENABLE_EP=true
 export DECODE_ENABLE_DP=true
-export DECODE_MTP_SIZE=2
+export DECODE_MTP_SIZE=1
+export RUNNER_NAME="debug_job"
+export NODE_LIST="smci355-ccs-aus-n09-25,smci355-ccs-aus-n09-29,smci355-ccs-aus-n09-33"
 
 JOB_ID=$(bash submit_disagg.sh \
     $PREFILL_NODES $PREFILL_WORKERS $DECODE_NODES $DECODE_WORKERS \
-    $ISL $OSL $CONCURRENCIES $REQUEST_RATE \
+    $ISL $OSL "$CONCURRENCIES" $REQUEST_RATE \
     $PREFILL_ENABLE_EP $PREFILL_ENABLE_DP \
-    $DECODE_ENABLE_EP $DECODE_ENABLE_DP)
+    $DECODE_ENABLE_EP $DECODE_ENABLE_DP "${BENCH_RANDOM_RANGE_RATIO:-0.8}" "$NODE_LIST")
 
 if [[ $? -ne 0 ]]; then
     echo "Failed to submit job" >&2

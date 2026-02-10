@@ -15,7 +15,6 @@ concurrency_list=${10:-"512x1"}
 chosen_req_rate=${11:-1}
 random_range_ratio=${12:-0.8}
 num_prompts_multiplier=${13:-10}
-max_retries=3
 
 IFS='x' read -r -a chosen_concurrencies <<< "$concurrency_list"
 

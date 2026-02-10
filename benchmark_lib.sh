@@ -241,6 +241,25 @@ run_benchmark_serving() {
     git clone https://github.com/kimbochen/bench_serving.git "$BENCH_SERVING_DIR"
     git -C "$BENCH_SERVING_DIR" checkout ee867231de0b268e2810a6e31751b23cf5903fc5
 
+
+    # Build warmup command
+    local warmup_cmd=(
+        python3 "$BENCH_SERVING_DIR/benchmark_serving.py"
+        --model "$model"
+        --backend "$backend"
+        --base-url "http://0.0.0.0:$port"
+        --dataset-name random
+        --random-input-len "$input_len"
+        --random-output-len "$output_len"
+        --random-range-ratio "$random_range_ratio"
+        --num-prompts "$num_prompts"
+        --max-concurrency "$max_concurrency"
+        --request-rate inf
+        --ignore-eos
+        --percentile-metrics 'ttft,tpot,itl,e2el'
+    )
+
+
     # Build benchmark command
     local benchmark_cmd=(
         python3 "$BENCH_SERVING_DIR/benchmark_serving.py"
@@ -256,7 +275,7 @@ run_benchmark_serving() {
         --request-rate inf
         --ignore-eos
         --save-result
-        --num-warmups "$((2 * max_concurrency))" \
+        --num-warmups "$((2 * max_concurrency))"
         --percentile-metrics 'ttft,tpot,itl,e2el'
         --result-dir "$result_dir"
         --result-filename "$result_filename.json"
@@ -264,8 +283,12 @@ run_benchmark_serving() {
     
     # Add --use-chat-template if requested
     if [[ "$use_chat_template" == true ]]; then
+        warmup_cmd+=(--use-chat-template)
         benchmark_cmd+=(--use-chat-template)
     fi
+
+    # FIXME(billishyahao): warmup outside gets tons of performance boost
+    "${warmup_cmd[@]}"
 
     # Run benchmark with optional server monitoring
     set -x

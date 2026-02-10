@@ -3,6 +3,7 @@
 ## List of Models - supported in this recipe, more models support are coming 
 
 - DeepSeek-V3 (https://huggingface.co/deepseek-ai/DeepSeek-V3)
+- DeepSeek-V3-0324 (https://huggingface.co/deepseek-ai/DeepSeek-V3-0324)
 - DeepSeek-R1 (https://huggingface.co/deepseek-ai/DeepSeek-R1)
 - DeepSeek-R1-0528 (https://huggingface.co/deepseek-ai/DeepSeek-R1-0528)
 

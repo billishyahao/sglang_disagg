@@ -22,6 +22,7 @@ echo ""
 # Define valid model names
 VALID_MODELS=( \
     "DeepSeek-V3" \
+    "DeepSeek-V3-0324" \
     "DeepSeek-R1" \
     "DeepSeek-R1-0528-MXFP4-Preview"
 )
@@ -30,6 +31,7 @@ VALID_MODELS=( \
 # Each model has an associated run file - Set it here
 declare -A MODEL_RUNFILES=(
     ["DeepSeek-V3"]="sglang_disagg_server.sh"
+    ["DeepSeek-V3-0324"]="sglang_disagg_server.sh"
     ["DeepSeek-R1"]="sglang_disagg_server.sh"
     ["DeepSeek-R1-0528-MXFP4-Preview"]="sglang_disagg_server.sh"
 )

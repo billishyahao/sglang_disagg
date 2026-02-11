@@ -53,8 +53,8 @@ for max_concurrency in ${chosen_concurrencies[@]}; do
         --num-prompts $(( $max_concurrency * $num_prompts_multiplier )) \
         --max-concurrency "$max_concurrency" \
         --result-filename "$export_file" \
-        --result-dir /workspace/
-        # $( [ "$IS_MTP" = "true" ] && echo "--use-chat-template" )
+        --result-dir /workspace/ \
+        $( [ "$IS_MTP" = "true" ] && echo "--use-chat-template" )
 
     echo "-----------------------------------------"
     sleep 5

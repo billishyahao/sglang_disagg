@@ -130,9 +130,14 @@ if [[ "$DECODE_ENABLE_DP" == "true" ]]; then
     decode_cuda_graph_bs=($(seq 1 160))
     decode_max_running_requests=4096
     decode_chunked_prefill_size=$((MORI_MAX_DISPATCH_TOKENS_DECODE * DECODE_TP_SIZE))
-else
+
+elif [[ "$DECODE_ENABLE_EP" == "true" ]]; then
     decode_cuda_graph_bs=($(seq 1 256))
     decode_max_running_requests=256
+    decode_chunked_prefill_size=262144
+else
+    decode_cuda_graph_bs=($(seq 1 128))
+    decode_max_running_requests=128
     decode_chunked_prefill_size=262144
 fi
 

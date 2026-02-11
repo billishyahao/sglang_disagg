@@ -3,6 +3,8 @@ import time
 import threading
 import argparse
 import sys
+import urllib.request
+import urllib.error
 
 # Parse command-line arguments
 parser = argparse.ArgumentParser(description="Optionally open and close a port on the local node.")
@@ -12,6 +14,9 @@ parser.add_argument("--enable-port", action="store_true", help="Enable opening a
 parser.add_argument("--node-ips", required=True, help="Comma-separated list of node IPs.")
 parser.add_argument("--node-ports", required=True, help="Comma-separated list of ports to check.")
 parser.add_argument("--timeout", type=int, default=600, help="Timeout in seconds for waiting on all ports (default: 600s / 10 minutes). Set to 0 for no timeout.")
+parser.add_argument("--wait-for-all-ports", action="store_true", help="Wait until all node ports are open (TCP).")
+parser.add_argument("--wait-for-all-health", action="store_true", help="Wait until http://ip:port/health returns 200 for all nodes.")
+parser.add_argument("--health-endpoint", default="/health", help="Path for health check (default: /health).")
 args = parser.parse_args()
 
 # Parse node IPs and ports from command-line arguments
@@ -62,6 +67,57 @@ def wait_for_all_ports():
             print(f"Waiting for nodes.{NODE_PORTS},{NODE_IPS} . .", flush=True)
         time.sleep(5)
 
+
+def check_health(ip, port, path="/health", timeout=2):
+    """Return True if http://ip:port/path returns HTTP 200."""
+    try:
+        url = f"http://{ip}:{port}{path}"
+        req = urllib.request.Request(url)
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return getattr(resp, "status", 200) == 200
+    except (urllib.error.URLError, urllib.error.HTTPError, OSError):
+        return False
+
+
+def wait_for_all_health(path="/health"):
+    """Wait until http://hostip:port/path returns 200 for all (NODE_IPS, NODE_PORTS) within timeout."""
+    start_time = time.time()
+    timeout_sec = args.timeout
+    check_timeout = 2
+
+    while True:
+        if timeout_sec > 0:
+            elapsed = time.time() - start_time
+            if elapsed >= timeout_sec:
+                not_ready = [
+                    (ip, port)
+                    for ip, port in zip(NODE_IPS, NODE_PORTS)
+                    if not check_health(ip, port, path, check_timeout)
+                ]
+                print(f"ERROR: Timeout after {timeout_sec} seconds waiting for health endpoints.", flush=True)
+                print(f"The following (http://ip:port{path}) are still not responding:", flush=True)
+                for ip, port in not_ready:
+                    print(f"  - http://{ip}:{port}{path}", flush=True)
+                sys.exit(1)
+
+        all_ready = all(
+            check_health(ip, port, path, check_timeout)
+            for ip, port in zip(NODE_IPS, NODE_PORTS)
+        )
+        if all_ready:
+            break
+
+        if timeout_sec > 0:
+            remaining = timeout_sec - (time.time() - start_time)
+            print(
+                f"Waiting for health on {list(zip(NODE_IPS, NODE_PORTS))} ({path}) .. ({remaining:.0f}s remaining)",
+                flush=True,
+            )
+        else:
+            print(f"Waiting for health on {list(zip(NODE_IPS, NODE_PORTS))} ({path}) ..", flush=True)
+        time.sleep(5)
+
+
 def open_port():
     """Open a listening socket on the current node."""
     global server_socket
@@ -88,8 +144,12 @@ if __name__ == "__main__":
 
     if args.enable_port:
         threading.Thread(target=open_port, daemon=True).start()
+    
+    if args.wait_for_all_ports:
+        wait_for_all_ports()
 
-    wait_for_all_ports()
+    if args.wait_for_all_health and args.health_endpoint:
+        wait_for_all_health(args.health_endpoint)
 
     if args.enable_port:
         time.sleep(30)

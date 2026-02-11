@@ -282,6 +282,7 @@ python $SGL_WS_PATH/socket_barrier.py \
     --enable-port \
     --node-ips ${IPADDRS} \
     --node-ports 5000 \
+    --wait-for-all-ports \
     --timeout 300
 
 
@@ -341,6 +342,7 @@ if [ "$NODE_RANK" -eq 0 ]; then
     BARRIER_CMD="python $SGL_WS_PATH/socket_barrier.py \
         --node-ips ${IPADDRS} \
         --node-ports 8000 \
+        --wait-for-all-ports \
         --timeout 1800"
 
     if [[ "$DRY_RUN" -eq 1 ]]; then
@@ -367,26 +369,21 @@ if [ "$NODE_RANK" -eq 0 ]; then
         eval "$ROUTER_CMD" \
             2>&1 | tee /run_logs/slurm_job-${SLURM_JOB_ID}/proxy_NODE${NODE_RANK}.log >/dev/null &
         proxy_pid=$!
-        
-        host="127.0.0.1"
-        port="30000"
-
-        # 1) Wait for HTTP /readiness 200
-        for i in {1..120}; do
-            # code=$(curl -fsS -o /dev/null -w '%{http_code}' http://$host:$port/readiness || true)
-            readiness_body_file=$(mktemp)
-            code=$(curl -fsS -o "$readiness_body_file" -w '%{http_code}' http://$host:$port/readiness || true)
-            if [ "$code" = "200" ]; then
-                readiness_json=$(cat "$readiness_body_file")
-                echo "Readiness JSON: $readiness_json"
-                break
-            fi
-            rm -f "$readiness_body_file"
-            sleep 2
-        done
-        [ "$code" = "200" ] || { echo "router readiness never returned 200"; exit 1; }
-
         set +x
+
+        BARRIER_CMD="python $SGL_WS_PATH/socket_barrier.py \
+        --node-ips ${NODE0_ADDR} \
+        --node-ports 30000 \
+        --wait-for-all-health \
+        --health-endpoint /readiness \
+        --timeout 1800"
+
+        if [[ "$DRY_RUN" -eq 1 ]]; then
+            echo "DRY RUN: $BARRIER_CMD"
+        else
+            eval "$BARRIER_CMD"
+        fi
+
         echo "Router is ready for benchmarking"
     fi
     
@@ -469,6 +466,7 @@ elif [ "$NODE_RANK" -gt 0 ] && [ "$NODE_RANK" -lt "$NODE_OFFSET" ]; then
     BARRIER_CMD="python $SGL_WS_PATH/socket_barrier.py \
         --node-ips ${NODE0_ADDR} \
         --node-ports 30000 \
+        --wait-for-all-ports \
         --timeout 1800"
 
     if [[ "$DRY_RUN" -eq 1 ]]; then
@@ -532,6 +530,7 @@ else
     BARRIER_CMD="python $SGL_WS_PATH/socket_barrier.py \
         --node-ips ${NODE0_ADDR} \
         --node-ports 30000 \
+        --wait-for-all-ports \
         --timeout 1800"
 
     if [[ "$DRY_RUN" -eq 1 ]]; then

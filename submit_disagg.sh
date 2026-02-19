@@ -63,13 +63,14 @@ PREFILL_ENABLE_DP=${10:-1}
 DECODE_ENABLE_EP=${11:-1}
 DECODE_ENABLE_DP=${12:-1}
 RANDOM_RANGE_RATIO=${13}
+# exclusion node list
 NODE_LIST=${14}
 
 
 NUM_NODES=$((PREFILL_NODES + DECODE_NODES))
 profiler_args="${ISL} ${OSL} ${CONCURRENCIES} ${REQUEST_RATE}"
 
-# Optional: pass an explicit node list to sbatch.
+# Optional: pass an exclusive explicit node list to sbatch.
 # NODE_LIST is expected to be comma-separated hostnames.
 NODELIST_OPT=()
 if [[ -n "${NODE_LIST//[[:space:]]/}" ]]; then
@@ -80,7 +81,7 @@ if [[ -n "${NODE_LIST//[[:space:]]/}" ]]; then
         exit 1
     fi
     NODELIST_CSV="$(IFS=,; echo "${NODE_ARR[*]}")"
-    NODELIST_OPT=(--nodelist "$NODELIST_CSV")
+    NODELIST_OPT=(--exclude "$NODELIST_CSV")
 fi
 
 # Export variables for the SLURM job

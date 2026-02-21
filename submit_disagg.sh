@@ -75,7 +75,8 @@ profiler_args="${ISL} ${OSL} ${CONCURRENCIES} ${REQUEST_RATE}"
 NODELIST_OPT=()
 if [[ -n "${NODE_LIST//[[:space:]]/}" ]]; then
     IFS=',' read -r -a NODE_ARR <<< "$NODE_LIST"
-    if [[ "${#NODE_ARR[@]}" -ne "$NUM_NODES" ]]; then
+    exclusive_num=${#NODE_ARR[@]}
+    if [[ "${#NODE_ARR[@]}" -gt "$((9 - NUM_NODES))" ]]; then
         echo "Error: NODE_LIST has ${#NODE_ARR[@]} nodes but NUM_NODES=${NUM_NODES}" >&2
         echo "Error: NODE_LIST='${NODE_LIST}'" >&2
         exit 1

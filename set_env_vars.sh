@@ -81,3 +81,4 @@ export MORI_RDMA_TC=$TC
 
 # WA for latest upstream 0218 image 
 export PYTHONPATH=/sgl-workspace/aiter:${PYTHONPATH}
+export SGLANG_AITER_FP8_PREFILL_ATTN=0

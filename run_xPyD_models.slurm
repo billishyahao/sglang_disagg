@@ -24,6 +24,7 @@ VALID_MODELS=( \
     "DeepSeek-V3" \
     "DeepSeek-V3-0324" \
     "DeepSeek-R1" \
+    "DeepSeek-R1-0528" \
     "DeepSeek-R1-MXFP4" \
     "DeepSeek-R1-0528-MXFP4" \
     "DeepSeek-R1-0528-MXFP4-Preview"
@@ -35,6 +36,7 @@ declare -A MODEL_RUNFILES=(
     ["DeepSeek-V3"]="sglang_disagg_server.sh"
     ["DeepSeek-V3-0324"]="sglang_disagg_server.sh"
     ["DeepSeek-R1"]="sglang_disagg_server.sh"
+    ["DeepSeek-R1-0528"]="sglang_disagg_server.sh"
     ["DeepSeek-R1-MXFP4"]="sglang_disagg_server.sh"
     ["DeepSeek-R1-0528-MXFP4"]="sglang_disagg_server.sh"
     ["DeepSeek-R1-0528-MXFP4-Preview"]="sglang_disagg_server.sh"

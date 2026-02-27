@@ -102,12 +102,12 @@ fi
 
 # DP-specific common configurations (only when DP is enabled)
 declare -A MODEL_DP_CONFIGS=(
-    ["DeepSeek-V3"]="--moe-a2a-backend mori --enable-dp-attention --moe-dense-tp-size 1 --enable-dp-lm-head"
-    ["DeepSeek-V3-0324"]="--moe-a2a-backend mori --enable-dp-attention --moe-dense-tp-size 1 --enable-dp-lm-head"
-    ["DeepSeek-R1"]="--moe-a2a-backend mori --enable-dp-attention --moe-dense-tp-size 1 --enable-dp-lm-head"
-    ["DeepSeek-R1-MXFP4"]="--moe-a2a-backend mori --enable-dp-attention --moe-dense-tp-size 1 --enable-dp-lm-head"
-    ["DeepSeek-R1-0528-MXFP4"]="--moe-a2a-backend mori --enable-dp-attention --moe-dense-tp-size 1 --enable-dp-lm-head"
-    ["DeepSeek-R1-0528-MXFP4-Preview"]="--moe-a2a-backend mori --enable-dp-attention --moe-dense-tp-size 1 --enable-dp-lm-head"
+    ["DeepSeek-V3"]="--moe-a2a-backend mori --deepep-mode normal --enable-dp-attention --moe-dense-tp-size 1 --enable-dp-lm-head"
+    ["DeepSeek-V3-0324"]="--moe-a2a-backend mori --deepep-mode normal --enable-dp-attention --moe-dense-tp-size 1 --enable-dp-lm-head"
+    ["DeepSeek-R1"]="--moe-a2a-backend mori --deepep-mode normal --enable-dp-attention --moe-dense-tp-size 1 --enable-dp-lm-head"
+    ["DeepSeek-R1-MXFP4"]="--moe-a2a-backend mori --deepep-mode normal --enable-dp-attention --moe-dense-tp-size 1 --enable-dp-lm-head"
+    ["DeepSeek-R1-0528-MXFP4"]="--moe-a2a-backend mori --deepep-mode normal --enable-dp-attention --moe-dense-tp-size 1 --enable-dp-lm-head"
+    ["DeepSeek-R1-0528-MXFP4-Preview"]="--moe-a2a-backend mori --deepep-mode normal --enable-dp-attention --moe-dense-tp-size 1 --enable-dp-lm-head"
 )
 
 

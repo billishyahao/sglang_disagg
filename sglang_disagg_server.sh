@@ -180,8 +180,9 @@ declare -A MODEL_DECODE_CONFIGS=(
 # =============================================================================
 IFS=',' read -ra IP_ARRAY <<< "$IPADDRS"
 
-PREFILL_NODES_PER_WORKER=$((PREFILL_TP_SIZE / 8))
-DECODE_NODES_PER_WORKER=$((DECODE_TP_SIZE / 8))
+# Ceiling division by 8 for nodes-per-worker
+PREFILL_NODES_PER_WORKER=$(((PREFILL_TP_SIZE + 7) / 8))
+DECODE_NODES_PER_WORKER=$(((DECODE_TP_SIZE + 7) / 8))
 NODE_OFFSET=$((PREFILL_NODES_PER_WORKER * xP))
 
 # Build prefill arguments dynamically based on xP

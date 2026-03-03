@@ -27,7 +27,8 @@ VALID_MODELS=( \
     "DeepSeek-R1-0528" \
     "DeepSeek-R1-MXFP4" \
     "DeepSeek-R1-0528-MXFP4" \
-    "DeepSeek-R1-0528-MXFP4-Preview"
+    "DeepSeek-R1-0528-MXFP4-Preview" \
+    "DeepSeek-R1-0528-MXFP4-th"
 )
 
 
@@ -40,6 +41,7 @@ declare -A MODEL_RUNFILES=(
     ["DeepSeek-R1-MXFP4"]="sglang_disagg_server.sh"
     ["DeepSeek-R1-0528-MXFP4"]="sglang_disagg_server.sh"
     ["DeepSeek-R1-0528-MXFP4-Preview"]="sglang_disagg_server.sh"
+    ["DeepSeek-R1-0528-MXFP4-th"]="sglang_disagg_server.sh"
 )
 
 # Check if MODEL_NAME exists and fetch runfile

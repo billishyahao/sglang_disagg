@@ -129,25 +129,16 @@ else
     prefill_chunked_prefill_size=262144
 fi
 
-# Use Decode configuration to configure different TP/DP size between P and D
-PREFILL_DECODE_DIFFERENT_TP=""
-if [[ "$PREFILL_ENABLE_DP" != "$DECODE_ENABLE_DP" ]]; then
-    if [[ "$DECODE_ENABLE_DP" == "true" ]]; then
-        PREFILL_DECODE_DIFFERENT_TP="--disaggregation-decode-tp ${DECODE_TP_SIZE} --disaggregation-decode-dp ${DECODE_TP_SIZE}"
-    else
-        PREFILL_DECODE_DIFFERENT_TP="--disaggregation-decode-tp ${DECODE_TP_SIZE} --disaggregation-decode-dp 1"
-    fi
-fi
 
 declare -A MODEL_PREFILL_CONFIGS=(
-    ["DeepSeek-V3"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size} --cuda-graph-bs ${prefill_cuda_graph_bs[*]} ${PREFILL_DECODE_DIFFERENT_TP} --disable-radix-cache"
-    ["DeepSeek-V3-0324"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size} --cuda-graph-bs ${prefill_cuda_graph_bs[*]} ${PREFILL_DECODE_DIFFERENT_TP} --disable-radix-cache"
-    ["DeepSeek-R1"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size} --cuda-graph-bs ${prefill_cuda_graph_bs[*]} ${PREFILL_DECODE_DIFFERENT_TP} --disable-radix-cache "
-    ["DeepSeek-R1-0528"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size} --cuda-graph-bs ${prefill_cuda_graph_bs[*]} ${PREFILL_DECODE_DIFFERENT_TP} --disable-radix-cache "
-    ["DeepSeek-R1-MXFP4"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size 16384  --cuda-graph-bs ${prefill_cuda_graph_bs[*]} ${PREFILL_DECODE_DIFFERENT_TP} --disable-radix-cache"
-    ["DeepSeek-R1-0528-MXFP4"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size 16384  --cuda-graph-bs ${prefill_cuda_graph_bs[*]} ${PREFILL_DECODE_DIFFERENT_TP} --disable-radix-cache"
-    ["DeepSeek-R1-0528-MXFP4-Preview"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size 16384  --cuda-graph-bs ${prefill_cuda_graph_bs[*]} ${PREFILL_DECODE_DIFFERENT_TP} --disable-radix-cache"
-    ["DeepSeek-R1-0528-MXFP4-th"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size 16384  --cuda-graph-bs ${prefill_cuda_graph_bs[*]} ${PREFILL_DECODE_DIFFERENT_TP} --disable-radix-cache"
+    ["DeepSeek-V3"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size} --cuda-graph-bs ${prefill_cuda_graph_bs[*]}  --disable-radix-cache"
+    ["DeepSeek-V3-0324"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size} --cuda-graph-bs ${prefill_cuda_graph_bs[*]}  --disable-radix-cache"
+    ["DeepSeek-R1"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size} --cuda-graph-bs ${prefill_cuda_graph_bs[*]}  --disable-radix-cache "
+    ["DeepSeek-R1-0528"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size} --cuda-graph-bs ${prefill_cuda_graph_bs[*]}  --disable-radix-cache "
+    ["DeepSeek-R1-MXFP4"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size 16384  --cuda-graph-bs ${prefill_cuda_graph_bs[*]}  --disable-radix-cache"
+    ["DeepSeek-R1-0528-MXFP4"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size 16384  --cuda-graph-bs ${prefill_cuda_graph_bs[*]}  --disable-radix-cache"
+    ["DeepSeek-R1-0528-MXFP4-Preview"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size 16384  --cuda-graph-bs ${prefill_cuda_graph_bs[*]}  --disable-radix-cache"
+    ["DeepSeek-R1-0528-MXFP4-th"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size 16384  --cuda-graph-bs ${prefill_cuda_graph_bs[*]}  --disable-radix-cache"
 )
 
 if [[ "$DECODE_MTP_SIZE" -gt 0 ]]; then

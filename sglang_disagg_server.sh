@@ -120,25 +120,23 @@ declare -A MODEL_DP_CONFIGS=(
 # Prefill-specific configurations
 # Set parameters based on DP enable status
 if [[ "$PREFILL_ENABLE_DP" == "true" ]]; then
-    prefill_cuda_graph_bs=($(seq 1 3))
-    prefill_max_running_requests=24
+    prefill_max_running_requests=$((160 * DECODE_TP_SIZE))
     prefill_chunked_prefill_size=$((MORI_MAX_DISPATCH_TOKENS_PREFILL * PREFILL_TP_SIZE))
 else
-    prefill_cuda_graph_bs=($(seq 1 128))
-    prefill_max_running_requests=128
+    prefill_max_running_requests=256
     prefill_chunked_prefill_size=262144
 fi
 
 
 declare -A MODEL_PREFILL_CONFIGS=(
-    ["DeepSeek-V3"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size} --cuda-graph-bs ${prefill_cuda_graph_bs[*]}  --disable-radix-cache"
-    ["DeepSeek-V3-0324"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size} --cuda-graph-bs ${prefill_cuda_graph_bs[*]}  --disable-radix-cache"
-    ["DeepSeek-R1"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size} --cuda-graph-bs ${prefill_cuda_graph_bs[*]}  --disable-radix-cache "
-    ["DeepSeek-R1-0528"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size} --cuda-graph-bs ${prefill_cuda_graph_bs[*]}  --disable-radix-cache "
-    ["DeepSeek-R1-MXFP4"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size 16384  --cuda-graph-bs ${prefill_cuda_graph_bs[*]}  --disable-radix-cache"
-    ["DeepSeek-R1-0528-MXFP4"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size 16384  --cuda-graph-bs ${prefill_cuda_graph_bs[*]}  --disable-radix-cache"
-    ["DeepSeek-R1-0528-MXFP4-Preview"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size 16384  --cuda-graph-bs ${prefill_cuda_graph_bs[*]}  --disable-radix-cache"
-    ["DeepSeek-R1-0528-MXFP4-th"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size 16384  --cuda-graph-bs ${prefill_cuda_graph_bs[*]}  --disable-radix-cache"
+    ["DeepSeek-V3"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}   --disable-radix-cache"
+    ["DeepSeek-V3-0324"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}   --disable-radix-cache"
+    ["DeepSeek-R1"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}   --disable-radix-cache "
+    ["DeepSeek-R1-0528"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}   --disable-radix-cache "
+    ["DeepSeek-R1-MXFP4"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size 16384    --disable-radix-cache"
+    ["DeepSeek-R1-0528-MXFP4"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size 16384    --disable-radix-cache"
+    ["DeepSeek-R1-0528-MXFP4-Preview"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size 16384    --disable-radix-cache"
+    ["DeepSeek-R1-0528-MXFP4-th"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size 16384    --disable-radix-cache"
 )
 
 if [[ "$DECODE_MTP_SIZE" -gt 0 ]]; then

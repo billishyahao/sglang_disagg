@@ -79,14 +79,14 @@ fi
 # Common configurations shared by both prefill and decode (base)
 
 declare -A MODEL_BASE_CONFIGS=(
-    ["DeepSeek-V3"]="--decode-log-interval 1 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
-    ["DeepSeek-V3-0324"]="--decode-log-interval 1 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
-    ["DeepSeek-R1"]="--decode-log-interval 1 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
-    ["DeepSeek-R1-0528"]="--decode-log-interval 1 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
-    ["DeepSeek-R1-MXFP4"]="--decode-log-interval 1 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter"
-    ["DeepSeek-R1-0528-MXFP4"]="--decode-log-interval 1 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter"
-    ["DeepSeek-R1-0528-MXFP4-Preview"]="--decode-log-interval 1 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter"
-    ["DeepSeek-R1-0528-MXFP4-th"]="--decode-log-interval 1 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter"
+    ["DeepSeek-V3"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
+    ["DeepSeek-V3-0324"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
+    ["DeepSeek-R1"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
+    ["DeepSeek-R1-0528"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
+    ["DeepSeek-R1-MXFP4"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter"
+    ["DeepSeek-R1-0528-MXFP4"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter"
+    ["DeepSeek-R1-0528-MXFP4-Preview"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter"
+    ["DeepSeek-R1-0528-MXFP4-th"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter"
 )
 
 

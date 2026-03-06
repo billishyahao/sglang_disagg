@@ -146,8 +146,8 @@ fi
 # Decode-specific configurations
 # Set parameters based on DP enable status
 if [[ "$DECODE_ENABLE_DP" == "true" ]]; then
-    decode_cuda_graph_bs=($(seq 1 160))
-    decode_max_running_requests=$((160 * DECODE_TP_SIZE))
+    decode_cuda_graph_bs=($(seq 1 256) $(seq 260 4 512))
+    decode_max_running_requests=$((512 * DECODE_TP_SIZE))
     decode_chunked_prefill_size=$((MORI_MAX_DISPATCH_TOKENS_DECODE * DECODE_TP_SIZE))
 
 elif [[ "$DECODE_ENABLE_EP" == "true" ]]; then

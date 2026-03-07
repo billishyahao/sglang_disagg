@@ -83,10 +83,10 @@ declare -A MODEL_BASE_CONFIGS=(
     ["DeepSeek-V3-0324"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
     ["DeepSeek-R1"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
     ["DeepSeek-R1-0528"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
-    ["DeepSeek-R1-MXFP4"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter"
-    ["DeepSeek-R1-0528-MXFP4"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter"
-    ["DeepSeek-R1-0528-MXFP4-Preview"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter"
-    ["DeepSeek-R1-0528-MXFP4-th"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter"
+    ["DeepSeek-R1-MXFP4"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
+    ["DeepSeek-R1-0528-MXFP4"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
+    ["DeepSeek-R1-0528-MXFP4-Preview"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
+    ["DeepSeek-R1-0528-MXFP4-th"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
 )
 
 
@@ -120,7 +120,7 @@ declare -A MODEL_DP_CONFIGS=(
 # Prefill-specific configurations
 # Set parameters based on DP enable status
 if [[ "$PREFILL_ENABLE_DP" == "true" ]]; then
-    prefill_max_running_requests=$((160 * DECODE_TP_SIZE))
+    prefill_max_running_requests=$((512 * DECODE_TP_SIZE))
     prefill_chunked_prefill_size=$((MORI_MAX_DISPATCH_TOKENS_PREFILL * PREFILL_TP_SIZE))
 else
     prefill_max_running_requests=256

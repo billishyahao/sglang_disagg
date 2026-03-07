@@ -133,10 +133,10 @@ declare -A MODEL_PREFILL_CONFIGS=(
     ["DeepSeek-V3-0324"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}   --disable-radix-cache"
     ["DeepSeek-R1"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}   --disable-radix-cache "
     ["DeepSeek-R1-0528"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}   --disable-radix-cache "
-    ["DeepSeek-R1-MXFP4"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size 16384    --disable-radix-cache"
-    ["DeepSeek-R1-0528-MXFP4"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size 16384    --disable-radix-cache"
-    ["DeepSeek-R1-0528-MXFP4-Preview"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size 16384    --disable-radix-cache"
-    ["DeepSeek-R1-0528-MXFP4-th"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size 16384    --disable-radix-cache"
+    ["DeepSeek-R1-MXFP4"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}    --disable-radix-cache"
+    ["DeepSeek-R1-0528-MXFP4"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}    --disable-radix-cache"
+    ["DeepSeek-R1-0528-MXFP4-Preview"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}    --disable-radix-cache"
+    ["DeepSeek-R1-0528-MXFP4-th"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}    --disable-radix-cache"
 )
 
 if [[ "$DECODE_MTP_SIZE" -gt 0 ]]; then

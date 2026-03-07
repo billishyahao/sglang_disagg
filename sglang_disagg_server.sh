@@ -148,29 +148,26 @@ fi
 if [[ "$DECODE_ENABLE_DP" == "true" ]]; then
     decode_cuda_graph_bs=($(seq 1 256) $(seq 260 4 512))
     decode_max_running_requests=$((512 * DECODE_TP_SIZE))
-    decode_chunked_prefill_size=$((MORI_MAX_DISPATCH_TOKENS_DECODE * DECODE_TP_SIZE))
 
 elif [[ "$DECODE_ENABLE_EP" == "true" ]]; then
     decode_cuda_graph_bs=($(seq 1 256))
     decode_max_running_requests=256
-    decode_chunked_prefill_size=262144
 else
     decode_cuda_graph_bs=($(seq 1 128))
     decode_max_running_requests=128
-    decode_chunked_prefill_size=262144
 fi
 
 
 ##FIXME(billishyahao): This is only workaround for now. We will eliminate this chunked-prefill-size for decode node in the future
 declare -A MODEL_DECODE_CONFIGS=(
-    ["DeepSeek-V3"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests} --chunked-prefill-size ${decode_chunked_prefill_size} --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
-    ["DeepSeek-V3-0324"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests} --chunked-prefill-size ${decode_chunked_prefill_size} --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
-    ["DeepSeek-R1"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests} --chunked-prefill-size ${decode_chunked_prefill_size} --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
-    ["DeepSeek-R1-0528"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests} --chunked-prefill-size ${decode_chunked_prefill_size} --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
-    ["DeepSeek-R1-MXFP4"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests} --chunked-prefill-size ${decode_chunked_prefill_size} --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
-    ["DeepSeek-R1-0528-MXFP4"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests} --chunked-prefill-size ${decode_chunked_prefill_size} --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
-    ["DeepSeek-R1-0528-MXFP4-Preview"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests} --chunked-prefill-size ${decode_chunked_prefill_size} --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
-    ["DeepSeek-R1-0528-MXFP4-th"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests} --chunked-prefill-size ${decode_chunked_prefill_size} --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
+    ["DeepSeek-V3"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests}  --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
+    ["DeepSeek-V3-0324"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests}  --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
+    ["DeepSeek-R1"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests}  --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
+    ["DeepSeek-R1-0528"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests}  --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
+    ["DeepSeek-R1-MXFP4"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests}  --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
+    ["DeepSeek-R1-0528-MXFP4"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests}  --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
+    ["DeepSeek-R1-0528-MXFP4-Preview"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests}  --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
+    ["DeepSeek-R1-0528-MXFP4-th"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests}  --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
 )
 
 

@@ -79,14 +79,14 @@ fi
 # Common configurations shared by both prefill and decode (base)
 
 declare -A MODEL_BASE_CONFIGS=(
-    ["DeepSeek-V3"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori --page-size 16"
-    ["DeepSeek-V3-0324"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori --page-size 16"
-    ["DeepSeek-R1"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori --page-size 16"
-    ["DeepSeek-R1-0528"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori --page-size 16"
-    ["DeepSeek-R1-MXFP4"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori --page-size 16"
-    ["DeepSeek-R1-0528-MXFP4"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori --page-size 16"
-    ["DeepSeek-R1-0528-MXFP4-Preview"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori --page-size 16"
-    ["DeepSeek-R1-0528-MXFP4-th"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori --page-size 16"
+    ["DeepSeek-V3"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
+    ["DeepSeek-V3-0324"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
+    ["DeepSeek-R1"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
+    ["DeepSeek-R1-0528"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
+    ["DeepSeek-R1-MXFP4"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
+    ["DeepSeek-R1-0528-MXFP4"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
+    ["DeepSeek-R1-0528-MXFP4-Preview"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
+    ["DeepSeek-R1-0528-MXFP4-th"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
 )
 
 
@@ -139,9 +139,6 @@ declare -A MODEL_PREFILL_CONFIGS=(
     ["DeepSeek-R1-0528-MXFP4-th"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}    --disable-radix-cache"
 )
 
-if [[ "$DECODE_MTP_SIZE" -gt 0 ]]; then
-    MORI_MAX_DISPATCH_TOKENS_DECODE=$((MORI_MAX_DISPATCH_TOKENS_DECODE * (DECODE_MTP_SIZE + 1)))
-fi
 
 # Decode-specific configurations
 # Set parameters based on DP enable status
@@ -155,6 +152,10 @@ elif [[ "$DECODE_ENABLE_EP" == "true" ]]; then
 else
     decode_cuda_graph_bs=($(seq 1 128))
     decode_max_running_requests=128
+fi
+
+if [[ "$DECODE_MTP_SIZE" -gt 0 ]]; then
+    MORI_MAX_DISPATCH_TOKENS_DECODE=$((MORI_MAX_DISPATCH_TOKENS_DECODE * (DECODE_MTP_SIZE + 1)))
 fi
 
 

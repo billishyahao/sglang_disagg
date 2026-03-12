@@ -88,3 +88,5 @@ export MORI_RDMA_TC=$TC
 
 # WA for latest upstream 0218 image 
 export PYTHONPATH=/sgl-workspace/aiter:${PYTHONPATH}
+
+export SGLANG_MORI_NEXTN_FP4_DISP=False

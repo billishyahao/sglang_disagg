@@ -100,7 +100,7 @@ if [[ "$DECODE_MTP_SIZE" =~ ^[0-9]+$ ]] && [[ "$DECODE_MTP_SIZE" -gt 0 ]]; then
         ["DeepSeek-R1-MXFP4"]="--speculative-algorithm NEXTN --speculative-num-steps ${DECODE_MTP_SIZE} --speculative-eagle-topk 1 --speculative-num-draft-tokens $((DECODE_MTP_SIZE + 1))"        
         ["DeepSeek-R1-0528-MXFP4"]="--speculative-algorithm NEXTN --speculative-num-steps ${DECODE_MTP_SIZE} --speculative-eagle-topk 1 --speculative-num-draft-tokens $((DECODE_MTP_SIZE + 1))"
         ["DeepSeek-R1-0528-MXFP4-Preview"]="--speculative-algorithm NEXTN --speculative-num-steps ${DECODE_MTP_SIZE} --speculative-eagle-topk 1 --speculative-num-draft-tokens $((DECODE_MTP_SIZE + 1))"
-        ["DeepSeek-R1-0528-MXFP4-th"]="--speculative-algorithm NEXTN --speculative-num-steps ${DECODE_MTP_SIZE} --speculative-eagle-topk 1 --speculative-num-draft-tokens $((DECODE_MTP_SIZE + 1))"
+        ["DeepSeek-R1-0528-MXFP4-th"]="--speculative-draft-model-path SGLang/DeepSeek-R1-NextN --speculative-algorithm NEXTN --speculative-num-steps ${DECODE_MTP_SIZE} --speculative-eagle-topk 1 --speculative-num-draft-tokens $((DECODE_MTP_SIZE + 1))"
     )
 fi
 

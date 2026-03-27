@@ -40,7 +40,6 @@ else
     echo "[Error] unable to fetch the hostname"
     exit 1
 fi
-set +x
 
 
 # export CUDA_DEVICE_MAX_CONNECTIONS=1
@@ -93,3 +92,5 @@ export SGLANG_MORI_NEXTN_FP4_DISP=False
 
 export SGLANG_ENABLE_SPEC_V2=1
 export SGLANG_ENABLE_OVERLAP_PLAN_STREAM=1
+
+set +x

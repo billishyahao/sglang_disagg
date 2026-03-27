@@ -90,7 +90,5 @@ export PYTHONPATH=/sgl-workspace/aiter:${PYTHONPATH}
 
 export SGLANG_MORI_NEXTN_FP4_DISP=False
 
-export SGLANG_ENABLE_SPEC_V2=1
-export SGLANG_ENABLE_OVERLAP_PLAN_STREAM=1
 
 set +x

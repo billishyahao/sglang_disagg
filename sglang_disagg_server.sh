@@ -146,7 +146,8 @@ declare -A MODEL_PREFILL_CONFIGS=(
 if [[ "$DECODE_ENABLE_DP" == "true" ]]; then
     # decode_cuda_graph_bs=($(seq 1 "$MORI_MAX_DISPATCH_TOKENS_DECODE"))
     decode_cuda_graph_bs=($(seq 1 560))
-    decode_max_running_requests=$((MORI_MAX_DISPATCH_TOKENS_DECODE * DECODE_TP_SIZE))
+    decode_max_running_requests=2048
+    # decode_max_running_requests=$((MORI_MAX_DISPATCH_TOKENS_DECODE * DECODE_TP_SIZE))
 
 elif [[ "$DECODE_ENABLE_EP" == "true" ]]; then
     decode_cuda_graph_bs=($(seq 1 256))

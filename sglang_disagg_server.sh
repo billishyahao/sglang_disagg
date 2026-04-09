@@ -86,7 +86,7 @@ declare -A MODEL_BASE_CONFIGS=(
     ["DeepSeek-R1-MXFP4"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
     ["DeepSeek-R1-0528-MXFP4"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
     ["DeepSeek-R1-0528-MXFP4-Preview"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
-    ["DeepSeek-R1-0528-MXFP4-th"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
+    ["DeepSeek-R1-0528-MXFP4-th"]="--decode-log-interval 100 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori "
 )
 
 
@@ -137,7 +137,7 @@ declare -A MODEL_PREFILL_CONFIGS=(
     ["DeepSeek-R1-MXFP4"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}    --disable-radix-cache"
     ["DeepSeek-R1-0528-MXFP4"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}    --disable-radix-cache"
     ["DeepSeek-R1-0528-MXFP4-Preview"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}    --disable-radix-cache"
-    ["DeepSeek-R1-0528-MXFP4-th"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}    --disable-radix-cache"
+    ["DeepSeek-R1-0528-MXFP4-th"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}  --tokenizer-worker-num 32  --disable-radix-cache"
 )
 
 
@@ -170,7 +170,7 @@ declare -A MODEL_DECODE_CONFIGS=(
     ["DeepSeek-R1-MXFP4"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests}  --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
     ["DeepSeek-R1-0528-MXFP4"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests}  --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
     ["DeepSeek-R1-0528-MXFP4-Preview"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests}  --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
-    ["DeepSeek-R1-0528-MXFP4-th"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests}  --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance --stream-interval 10"
+    ["DeepSeek-R1-0528-MXFP4-th"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests}  --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance --tokenizer-worker-num 32 --stream-interval 2"
 )
 
 

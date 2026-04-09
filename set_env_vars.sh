@@ -85,6 +85,10 @@ TC=$(( 4 * $ND_DSCP ))
 export MORI_RDMA_SL=$ND_PRIO
 export MORI_RDMA_TC=$TC
 
+export MORI_IO_SL=$ND_PRIO
+export MORI_IO_TC=$TC
+export MORI_IO_TC_DISABLE=0
+
 # WA for latest upstream 0218 image 
 export PYTHONPATH=/sgl-workspace/aiter:${PYTHONPATH}
 

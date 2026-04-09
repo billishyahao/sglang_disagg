@@ -145,8 +145,7 @@ declare -A MODEL_PREFILL_CONFIGS=(
 # Set parameters based on DP enable status
 if [[ "$DECODE_ENABLE_DP" == "true" ]]; then
     decode_cuda_graph_bs=($(seq 1 "$MORI_MAX_DISPATCH_TOKENS_DECODE"))
-    decode_max_running_requests=2048
-    # decode_max_running_requests=$((MORI_MAX_DISPATCH_TOKENS_DECODE * DECODE_TP_SIZE))
+    decode_max_running_requests=$((MORI_MAX_DISPATCH_TOKENS_DECODE * DECODE_TP_SIZE))
 
 elif [[ "$DECODE_ENABLE_EP" == "true" ]]; then
     decode_cuda_graph_bs=($(seq 1 256))
@@ -170,7 +169,7 @@ declare -A MODEL_DECODE_CONFIGS=(
     ["DeepSeek-R1-MXFP4"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests}  --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
     ["DeepSeek-R1-0528-MXFP4"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests}  --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
     ["DeepSeek-R1-0528-MXFP4-Preview"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests}  --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
-    ["DeepSeek-R1-0528-MXFP4-th"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests}  --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance --tokenizer-worker-num 32 --stream-interval 2"
+    ["DeepSeek-R1-0528-MXFP4-th"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests}  --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance --tokenizer-worker-num 32 --stream-interval 100"
 )
 
 

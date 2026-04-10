@@ -137,7 +137,7 @@ declare -A MODEL_PREFILL_CONFIGS=(
     ["DeepSeek-R1-MXFP4"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}    --disable-radix-cache"
     ["DeepSeek-R1-0528-MXFP4"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}    --disable-radix-cache"
     ["DeepSeek-R1-0528-MXFP4-Preview"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}    --disable-radix-cache"
-    ["DeepSeek-R1-0528-MXFP4-th"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}  --tokenizer-worker-num 32  --disable-radix-cache"
+    ["DeepSeek-R1-0528-MXFP4-th"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}  --tokenizer-worker-num 8  --disable-radix-cache"
 )
 
 
@@ -169,7 +169,7 @@ declare -A MODEL_DECODE_CONFIGS=(
     ["DeepSeek-R1-MXFP4"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests}  --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
     ["DeepSeek-R1-0528-MXFP4"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests}  --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
     ["DeepSeek-R1-0528-MXFP4-Preview"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests}  --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
-    ["DeepSeek-R1-0528-MXFP4-th"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests}  --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance --tokenizer-worker-num 32 --stream-interval 100"
+    ["DeepSeek-R1-0528-MXFP4-th"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests}  --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance --tokenizer-worker-num 8 --stream-interval 3"
 )
 
 

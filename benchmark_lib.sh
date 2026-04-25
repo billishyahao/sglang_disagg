@@ -237,10 +237,7 @@ run_benchmark_serving() {
     fi
 
     # Clone benchmark serving repo
-    local BENCH_SERVING_DIR=$(mktemp -d /tmp/bmk-XXXXXX)
-    git clone https://github.com/ZhaiFeiyue/bench_serving.git "$BENCH_SERVING_DIR"
-    git -C "$BENCH_SERVING_DIR" checkout fix_tokenizer
-
+    local BENCH_SERVING_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
     # Build warmup command
     # local warmup_cmd=(

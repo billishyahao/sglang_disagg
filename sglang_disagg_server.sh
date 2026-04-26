@@ -313,6 +313,10 @@ python $SGL_WS_PATH/socket_barrier.py \
     --node-ports 5000 \
     --wait-for-all-ports \
     --timeout 300
+if [ $? -ne 0 ]; then
+    echo "FATAL: Container creation barrier failed on ${host_name}. Aborting."
+    exit 1
+fi
 
 
 # =============================================================================
@@ -379,6 +383,11 @@ if [ "$NODE_RANK" -eq 0 ]; then
         echo "DRY RUN: $BARRIER_CMD"
     else
         eval "$BARRIER_CMD"
+        if [ $? -ne 0 ]; then
+            echo "FATAL: Not all prefill/decode servers came up within timeout. Aborting."
+            [[ -n "${prefill0_pid:-}" ]] && kill $prefill0_pid 2>/dev/null
+            exit 1
+        fi
     fi
     echo "Congratulations!!! All prefill and decode servers are up . . ."
 
@@ -412,6 +421,12 @@ if [ "$NODE_RANK" -eq 0 ]; then
             echo "DRY RUN: $BARRIER_CMD"
         else
             eval "$BARRIER_CMD"
+            if [ $? -ne 0 ]; then
+                echo "FATAL: Router health check failed within timeout. Aborting."
+                [[ -n "${proxy_pid:-}" ]] && kill $proxy_pid 2>/dev/null
+                [[ -n "${prefill0_pid:-}" ]] && kill $prefill0_pid 2>/dev/null
+                exit 1
+            fi
         fi
 
         echo "Router is ready for benchmarking"
@@ -503,6 +518,11 @@ elif [ "$NODE_RANK" -gt 0 ] && [ "$NODE_RANK" -lt "$NODE_OFFSET" ]; then
         echo "DRY RUN: $BARRIER_CMD"
     else
         eval "$BARRIER_CMD"
+        if [ $? -ne 0 ]; then
+            echo "FATAL: Proxy server not ready within timeout on prefill node ${NODE_RANK}. Aborting."
+            [[ -n "${prefill_pid:-}" ]] && kill $prefill_pid 2>/dev/null
+            exit 1
+        fi
     fi
 
     echo "Waiting until proxy server closes..."
@@ -569,6 +589,11 @@ else
         echo "DRY RUN: $BARRIER_CMD"
     else
         eval "$BARRIER_CMD"
+        if [ $? -ne 0 ]; then
+            echo "FATAL: Proxy server not ready within timeout on decode node rank ${RANK}. Aborting."
+            [[ -n "${decode_pid:-}" ]] && kill $decode_pid 2>/dev/null
+            exit 1
+        fi
     fi
 
 

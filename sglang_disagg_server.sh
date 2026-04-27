@@ -121,7 +121,7 @@ declare -A MODEL_DP_CONFIGS=(
 # Set parameters based on DP enable status
 if [[ "$PREFILL_ENABLE_DP" == "true" ]]; then
     # prefill_max_running_requests=$((MORI_MAX_DISPATCH_TOKENS_DECODE * DECODE_TP_SIZE))
-    prefill_max_running_requests=32
+    prefill_max_running_requests=4096
     prefill_chunked_prefill_size=$((MORI_MAX_DISPATCH_TOKENS_PREFILL * PREFILL_TP_SIZE))
 else
     prefill_max_running_requests=256
@@ -137,7 +137,7 @@ declare -A MODEL_PREFILL_CONFIGS=(
     ["DeepSeek-R1-MXFP4"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}    --disable-radix-cache"
     ["DeepSeek-R1-0528-MXFP4"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}    --disable-radix-cache"
     ["DeepSeek-R1-0528-MXFP4-Preview"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}    --disable-radix-cache"
-    ["DeepSeek-R1-0528-MXFP4-th"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}  --tokenizer-worker-num 32  --disable-radix-cache"
+    ["DeepSeek-R1-0528-MXFP4-th"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}  --tokenizer-worker-num 32 --context-length 8292 --max-total-tokens 131072 --disable-radix-cache"
 )
 
 

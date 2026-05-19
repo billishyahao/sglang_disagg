@@ -33,6 +33,9 @@ BENCH_REQUEST_RATE="${BENCH_REQUEST_RATE:-inf}"
 BENCH_NUM_PROMPTS_MULTIPLIER="${BENCH_NUM_PROMPTS_MULTIPLIER:-10}"
 BENCH_MAX_CONCURRENCY="${BENCH_MAX_CONCURRENCY:-512}"
 
+# Extract the maximum concurrency from the x-delimited list
+BENCH_MAX_CONC_VALUE=$(echo "$BENCH_MAX_CONCURRENCY" | tr 'x' '\n' | sort -n | tail -1)
+
 # Dry Run for debugging purpose
 DRY_RUN="${DRY_RUN:-0}"
 
@@ -131,6 +134,15 @@ else
     prefill_chunked_prefill_size=262144
 fi
 
+# When both DP and EP are enabled, override max-running-requests with max bench concurrency
+if [[ "$PREFILL_ENABLE_DP" == "true" ]] && [[ "$PREFILL_ENABLE_EP" == "true" ]]; then
+    prefill_max_running_requests=$BENCH_MAX_CONC_VALUE
+    prefill_dp_ranks=$PREFILL_TP_SIZE
+    # MORI_MAX_DISPATCH_TOKENS_PREFILL stays at 8192 (no change)
+    MORI_MOE_MAX_INPUT_TOKENS_PREFILL=$((MORI_MAX_DISPATCH_TOKENS_PREFILL * prefill_dp_ranks / 2))
+    echo "[DP+EP override] Prefill: max-running-requests=$prefill_max_running_requests, MOE_MAX_INPUT=$MORI_MOE_MAX_INPUT_TOKENS_PREFILL"
+fi
+
 
 declare -A MODEL_PREFILL_CONFIGS=(
     ["DeepSeek-V3"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size}   --disable-radix-cache"
@@ -161,6 +173,18 @@ fi
 if [[ "$DECODE_MTP_SIZE" -gt 0 ]]; then
     MORI_MAX_DISPATCH_TOKENS_DECODE=$((MORI_MAX_DISPATCH_TOKENS_DECODE * (DECODE_MTP_SIZE + 1)))
     MORI_MOE_MAX_INPUT_TOKENS_DECODE=$((MORI_MOE_MAX_INPUT_TOKENS_DECODE * (DECODE_MTP_SIZE + 1)))
+fi
+
+# When both DP and EP are enabled, override max-running-requests and dispatch tokens
+if [[ "$DECODE_ENABLE_DP" == "true" ]] && [[ "$DECODE_ENABLE_EP" == "true" ]]; then
+    decode_max_running_requests=$BENCH_MAX_CONC_VALUE
+    decode_dp_ranks=$DECODE_TP_SIZE
+    MORI_MAX_DISPATCH_TOKENS_DECODE=$((BENCH_MAX_CONC_VALUE / decode_dp_ranks))
+    MORI_MOE_MAX_INPUT_TOKENS_DECODE=$((MORI_MAX_DISPATCH_TOKENS_DECODE * decode_dp_ranks * 13 / 20))
+    # Update derived variable
+    SGLANG_MORI_DISPATCH_INTER_KERNEL_SWITCH_THRESHOLD=$((MORI_MAX_DISPATCH_TOKENS_DECODE * 2))
+    export SGLANG_MORI_DISPATCH_INTER_KERNEL_SWITCH_THRESHOLD
+    echo "[DP+EP override] Decode: max-running-requests=$decode_max_running_requests, DISPATCH_TOKENS=$MORI_MAX_DISPATCH_TOKENS_DECODE, MOE_MAX_INPUT=$MORI_MOE_MAX_INPUT_TOKENS_DECODE, INTER_KERNEL_SWITCH=$SGLANG_MORI_DISPATCH_INTER_KERNEL_SWITCH_THRESHOLD"
 fi
 
 
@@ -348,7 +372,7 @@ if [ "$NODE_RANK" -eq 0 ]; then
     echo "================================================"
     
     # start the head prefill server
-    PREFILL_CMD="${prefill_sdma_env} SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK=${MORI_MAX_DISPATCH_TOKENS_PREFILL} python3 -m sglang.launch_server \
+    PREFILL_CMD="SGLANG_MORI_COMBINE_DTYPE=${MORI_COMBINE_DTYPE_PREFILL} ${prefill_sdma_env} SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK=${MORI_MAX_DISPATCH_TOKENS_PREFILL} python3 -m sglang.launch_server \
         --model-path $MODEL_DIR/$MODEL_NAME \
         --disaggregation-mode prefill \
         --disaggregation-ib-device ${IBDEVICES} \
@@ -485,7 +509,7 @@ elif [ "$NODE_RANK" -gt 0 ] && [ "$NODE_RANK" -lt "$NODE_OFFSET" ]; then
     echo "Prefill parallelism: TP=${PREFILL_TP_SIZE}, EP enabled: ${PREFILL_ENABLE_EP}, DP enabled: ${PREFILL_ENABLE_DP}"
 
 
-    PREFILL_CMD="${prefill_sdma_env} SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK=${MORI_MAX_DISPATCH_TOKENS_PREFILL} python3 -m sglang.launch_server \
+    PREFILL_CMD="SGLANG_MORI_COMBINE_DTYPE=${MORI_COMBINE_DTYPE_PREFILL} ${prefill_sdma_env} SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK=${MORI_MAX_DISPATCH_TOKENS_PREFILL} python3 -m sglang.launch_server \
         --model-path $MODEL_DIR/${MODEL_NAME} \
         --disaggregation-mode prefill \
         --disaggregation-ib-device ${IBDEVICES} \
@@ -556,7 +580,7 @@ else
 
     unset SGLANG_MORI_FP8_COMB
 
-    DECODE_CMD="SGLANG_MORI_MOE_MAX_INPUT_TOKENS=${MORI_MOE_MAX_INPUT_TOKENS_DECODE} SGLANG_DISAGGREGATION_NUM_PRE_ALLOCATE_REQS=256 SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK=${MORI_MAX_DISPATCH_TOKENS_DECODE} python3 -m sglang.launch_server \
+    DECODE_CMD="SGLANG_MORI_COMBINE_DTYPE=${MORI_COMBINE_DTYPE_DECODE} SGLANG_MORI_MOE_MAX_INPUT_TOKENS=${MORI_MOE_MAX_INPUT_TOKENS_DECODE} SGLANG_DISAGGREGATION_NUM_PRE_ALLOCATE_REQS=256 SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK=${MORI_MAX_DISPATCH_TOKENS_DECODE} python3 -m sglang.launch_server \
         --model-path ${MODEL_DIR}/${MODEL_NAME} \
         --disaggregation-mode decode \
         --disaggregation-ib-device ${IBDEVICES} \
